@@ -1,0 +1,51 @@
+.container{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+.Form{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap:30px;
+  width: clamp(200px, 400px, 600px);
+  
+}
+.custom_text {
+  font-family: 'Libre Baskerville', serif;
+  font-weight: 700;
+  font-size: 48px;
+  line-height: 100%;
+  letter-spacing: 0%;
+}
+.custom_subText{
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 150%;
+  letter-spacing: 0%;
+  color:#718096;
+}
+.text{
+  font-family: Inter;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 20px;
+  letter-spacing: -0.15px;
+  color: #718096;  
+}
+.InputContainer{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+/* Default styles */
+
+
+/* When the screen width is at least 407px */
+@media (max-width: 407px) {
+  .Form {
+    width: clamp(100px, 300px, 600px);
+  }
+}
