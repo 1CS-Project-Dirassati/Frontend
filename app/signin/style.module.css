@@ -13,13 +13,21 @@
   
 }
 .custom_text {
-  font-family: 'Libre Baskerville', serif;
+  font-family: 'Libre Baskerville', serif;  
   font-weight: 700;
   font-size: 48px;
   line-height: 100%;
   letter-spacing: 0%;
 }
 .custom_subText{
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 150%;
+  letter-spacing: 0%;
+  color:#718096;
+}
+.custom_Text_forgotPassword{
   font-family: 'Inter', sans-serif;
   font-weight: 400;
   font-size: 18px;
@@ -40,6 +48,16 @@
   flex-direction: column;
   gap: 10px;
 }
+.Error_message{
+  font-family: Inter;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 28px;
+  letter-spacing: 0%;
+  vertical-align: middle;
+  color: #E74040;
+  
+}
 /* Default styles */
 
 
@@ -48,4 +66,10 @@
   .Form {
     width: clamp(100px, 300px, 600px);
   }
+  .custom_subText{
+  
+   position: absolute;
+   bottom: 15px;
+  }
+  
 }

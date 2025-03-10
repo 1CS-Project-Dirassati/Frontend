@@ -4,7 +4,7 @@ import { Input } from 'antd';
 
 
 
-export default function InputFields({ placeHolder, inputValue, onInputChange, Status })  {
+export default function InputFields({ placeHolder, inputValue, onInputChange, Status,type })  {
   const [input, setInput] = useState(inputValue || '');
   const handleInputChange = (e) => {
     setInput(e.target.value);
@@ -24,6 +24,7 @@ export default function InputFields({ placeHolder, inputValue, onInputChange, St
       maxHeight: '48px',
       width: '100%',
     }}
+    type={type}
     
     variant="filled"
   />

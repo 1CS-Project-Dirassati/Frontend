@@ -1,6 +1,6 @@
 "use client";
 import { Button as AntDButton  } from 'antd';
-export default function AntButton_primary({text,onClick }){
+export default function AntButton_primary({text,onClick,disabled }){
   const customButtonStyle = {
     display: "flex",
     width: "100%",
@@ -24,7 +24,7 @@ export default function AntButton_primary({text,onClick }){
   
   return (
   
- <AntDButton onClick={onClick} size='large' block type="primary" style={customButtonStyle} >{text}</AntDButton>
+ <AntDButton onClick={onClick} size='large' block type="primary" style={customButtonStyle} disabled={disabled} >{text}</AntDButton>
   )
 }
 
