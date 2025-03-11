@@ -54,7 +54,7 @@ export default function ResetPassword() {
   const VerifyClickHandler = (e) => {};
 
   if (!isVerifiedOTP) {
-    return <p> ERROR please try again!</p>;
+    router.push("/signin/reset-password");
   } else {
     return (
       <div className={style.container}>

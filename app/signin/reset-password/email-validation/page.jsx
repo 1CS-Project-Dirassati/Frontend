@@ -1,9 +1,9 @@
 "use client";
 import style from "../../style.module.css"
 import  AntButton_primary   from "@/components/ui/antButton_primary ";
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import OTP from "@/components/ui/OTPInput";
-import {  useDispatch } from "react-redux";
+import {  useDispatch ,useSelector} from "react-redux";
 import { verifyOTP,resetOTP } from "../../../redux/features/resetPasswordSlice";
 import { useRouter } from "next/navigation";
 
@@ -11,7 +11,11 @@ export default function emailVerification() {
   const router = useRouter();
   const [otp, setOTP] = useState('');
   const [status, setStatus] = useState("");
+  const email = useSelector((state) => state.resetPassword.email);
   const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(resetOTP()); // Reset OTP state when the component mounts
+  },[dispatch]);
 
   const handleOTPChange = (index, value) => {
     const newOTP = otp.slice(0, index) + value + otp.slice(index + 1);
@@ -33,6 +37,11 @@ export default function emailVerification() {
     console.log("Verify clicked")
   }
 
+
+  if (email === "") {
+    router.push("/signin/reset-password");
+  }
+  else{
 
 
 
@@ -61,3 +70,4 @@ export default function emailVerification() {
     </div>
   )
 }
+} 
