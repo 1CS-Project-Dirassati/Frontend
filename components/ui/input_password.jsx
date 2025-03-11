@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Input } from "antd";
 import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
 
-const Input_password = ({ inputValue, onInputChange, Status }) => {
+const Input_password = ({ inputValue, onInputChange }) => {
   const [input, setInput] = useState(inputValue || "");
 
   const handleInputChange = (e) => {
@@ -25,7 +25,7 @@ const Input_password = ({ inputValue, onInputChange, Status }) => {
       iconRender={(visible) => (visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />)}
       value={input}
       onChange={handleInputChange}
-      status={Status}
+      
       variant="filled"
     />
   );
