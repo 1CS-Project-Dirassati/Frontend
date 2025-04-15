@@ -6,10 +6,12 @@ import { useRouter } from "next/navigation";
 import Input_Password from "@/components/ui/input_password";
 import { useSelector } from "react-redux";
 import { message } from "antd";
+import { Phone } from "lucide-react";
 
 export default function ResetPassword() {
   const isVerifiedOTP = useSelector((state) => state.resetPassword.isVerifiedOTP);
-
+  const dataState = useSelector((state)=> state.resetPassword);
+ console.log(dataState)
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirmationPassword, setConfirmationPassword] = useState("");
@@ -51,7 +53,32 @@ export default function ResetPassword() {
   // - Confirmation password matches new password
   const isButtonDisabled = status === "error" || !isMatching;
 
-  const VerifyClickHandler = (e) => {};
+  const VerifyClickHandler = async (e) => {
+    
+    try{
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/verify-otp-reset`, {
+       method: "POST",
+       headers: new Headers({
+         'Content-Type': 'application/json',
+         'Accept': 'application/json'
+       }),
+       body: JSON.stringify({
+         password: password,
+         phoneNumber: `+123${dataState.email}`,
+         otp: dataState.otp,
+ 
+       }),
+     })
+     const data = await response.json();
+     if (response.ok) {
+      router.push("/signin");
+    } 
+   }
+   catch (error) {
+     console.error("error:", error);
+   }
+
+}
 
   if (!isVerifiedOTP) {
     router.push("/signin/reset-password");
@@ -65,9 +92,15 @@ export default function ResetPassword() {
             <p className={style.text}>New Password</p>
             <Input_Password Status={status} inputValue={password} onInputChange={handleChangePassword} />
 
-            {/* Dynamic Validation List */}
+          </div>
+
+          <div className={style.InputContainer}>
+            <p className={style.text}>Confirm New Password</p>
+            <Input_Password inputValue={confirmationPassword} onInputChange={handleChangeConfirmationPassword} />
+
+       
             <div style={{ marginLeft: "5px", fontSize: "14px", lineHeight: "1.5", fontWeight: "bold" }}>
-              <p style={{ color: isValidLength ? "green" : "red" }}>
+            <p style={{ color: isValidLength ? "green" : "red" }}>
                 {isValidLength ? "✅" : "❌"} At least 8 characters long
               </p>
               <p style={{ color: hasNumber ? "green" : "red" }}>
@@ -76,15 +109,6 @@ export default function ResetPassword() {
               <p style={{ color: hasSpecialChar ? "green" : "red" }}>
                 {hasSpecialChar ? "✅" : "❌"} Contains at least one special character (!@#$%^&*())
               </p>
-            </div>
-          </div>
-
-          <div className={style.InputContainer}>
-            <p className={style.text}>Confirm New Password</p>
-            <Input_Password inputValue={confirmationPassword} onInputChange={handleChangeConfirmationPassword} />
-
-            {/* Password Match Validation */}
-            <div style={{ marginLeft: "5px", fontSize: "14px", lineHeight: "1.5", fontWeight: "bold" }}>
               <p style={{ color: isMatching ? "green" : "red" }}>
                 {isMatching ? "✅" : "❌"} New password and confirmation password match
               </p>

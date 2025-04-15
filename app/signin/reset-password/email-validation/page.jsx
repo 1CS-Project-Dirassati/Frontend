@@ -12,6 +12,8 @@ export default function emailVerification() {
   const [otp, setOTP] = useState('');
   const [status, setStatus] = useState("");
   const email = useSelector((state) => state.resetPassword.email);
+  const rightotp = useSelector((state) => state.resetPassword.otp);
+  console.log(rightotp)
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(resetOTP()); // Reset OTP state when the component mounts
@@ -23,7 +25,7 @@ export default function emailVerification() {
   };
 
   const VerifyClickHandler =  (e) => {
-     if(otp==="12345"){
+     if(otp===rightotp){
       dispatch(verifyOTP());
       router.push("/signin/reset-password/new-password")
       setStatus(null)
@@ -32,9 +34,6 @@ export default function emailVerification() {
       dispatch(resetOTP());
        setStatus("error")
      }
-     
-
-    console.log("Verify clicked")
   }
 
 

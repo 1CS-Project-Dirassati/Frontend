@@ -3,29 +3,57 @@ import style from "./style.module.css"
 import  AntButton_primary   from "@/components/ui/antButton_primary ";
 import  Input  from "@/components/ui/antInput";
 import Input_Password  from "@/components/ui/input_password";
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { useRouter } from "next/navigation";
-export default function SignInPage() {
+import { useSelector,useDispatch } from "react-redux";
+import { setToken } from "../redux/features/authSlice";
 
+export default function SignInPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [status,setStatus] = useState("");
-
+  const dispatch = useDispatch();
+  const token = useSelector((state) => state.auth.token);
 
   const handleChangeEmail = (value) => {
     setEmail(value);
   };
-
-  const signupClickHandler =  (e) => {
-    console.log("login clicked")
-
+  const signupClickHandler = async (e) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
+        method: "POST",
+        headers: new Headers({
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }),
+        body: JSON.stringify({
+          email: email,
+          password: password,
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        dispatch(setToken(data.token)); // ✅ Set token here
+      } else {
+        setStatus("Invalid email or password");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      setStatus("Something went wrong");
+    }
   };
 
   const handleChangePassword = (newValue) => {
     setStatus("");
     setPassword(newValue);
   };
+  if (token){
+    router.push("/home")
+  }
+  else {
 
   return (
     <div className={style.container}>
@@ -51,4 +79,5 @@ export default function SignInPage() {
     </div>
     </div>
   )
+}
 }
