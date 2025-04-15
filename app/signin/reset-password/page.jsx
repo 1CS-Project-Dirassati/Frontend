@@ -23,8 +23,8 @@ export default function ResetPassword(){
 
     setLocalEmail(value);
     const isValid = EmailValidation(value); 
-    //setDisabled(!isValid);
-    setDisabled(false);
+    setDisabled(!isValid);
+    
     setStatus(!value ? "" : isValid ? "" : "error");
 
   };
@@ -32,14 +32,14 @@ export default function ResetPassword(){
   const VerifyClickHandler = async (e) => {
     
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/forgot-password`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/forgot-password`, {
         method: "POST",
         headers: new Headers({
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         }),
         body: JSON.stringify({
-          phoneNumber: `+123${email}`, 
+          phoneNumber: email, 
         }),
       });
   
@@ -71,8 +71,8 @@ export default function ResetPassword(){
       <div className={style.Form}>
         <h1 className={style.custom_text}>Reset Password</h1>
         <div className={style.InputContainer}>
-          <p className={style.text}>E-mail</p>
-             <Input placeHolder={"example@gmail.com"} Status={status} inputValue={email} onInputChange={handleChangeEmail} ></Input>
+          <p className={style.text}>E-email</p>
+             <Input placeHolder={"exmple@exmpl.com"} Status={status} inputValue={email} onInputChange={handleChangeEmail} ></Input>
        </div>  
       <AntButton_primary text={"Send Verification Email"} onClick={VerifyClickHandler} disabled={disabled}></AntButton_primary>
     </div>

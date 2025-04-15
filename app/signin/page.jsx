@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useSelector,useDispatch } from "react-redux";
 import { setToken } from "../redux/features/auth/authSlice";
 import {persistor} from "../redux/store";
-import { resetApp } from "../redux/features/resetSlice";
+import apiCall from "../../components/utils/apiCall";
 export default function SignInPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -24,30 +24,21 @@ export default function SignInPage() {
   };
   const signupClickHandler = async (e) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
-        method: "POST",
-        headers: new Headers({
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }),
-        body: JSON.stringify({
-          email: email,
-          password: password,
-        }),
-      });
-  
-      const data = await response.json();
-  
-      if (response.ok) {
-        dispatch(setToken(data.token)); // ✅ Set token here
-      } else {
-        setStatus("Invalid email or password");
-      }
+      const dataUser = { email:email, password:password };
+      const result = await apiCall('POST', '/auth/login', dataUser);    
+      const accessToken = result[0].access_token;
+      const refreshToken = result[0].refresh_token;
+    if (result[1] === 200){ 
+      dispatch(setToken({accessToken:accessToken,refreshToken:refreshToken})); 
+      
+    } else {
+      setStatus("Invalid email or password");
+    }
     } catch (error) {
       console.error("Login error:", error);
       setStatus("Something went wrong");
     }
-  };
+    };
 
   const handleChangePassword = (newValue) => {
     setStatus("");
