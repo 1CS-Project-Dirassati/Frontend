@@ -29,9 +29,36 @@ export default function Step1({ nextStep, setParentInfo }) {
     return Promise.resolve(false);
   }
 
+  async function registerUser(email, password, phone) {
+    try {
+      const res = await fetch("https://mangoxman.pythonanywhere.com/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify({ email, password, phoneNumber: phone }),
+      });
+  
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${res.status}`);
+      }
+  
+      return await res.json();
+    } catch (err) {
+      console.error("Registration error:", err);
+      throw new Error(err.message || "Network request failed");
+    }
+  }
+  
+
+
   async function handleNext() {
     if (skipValidation) {
-      // Save parent's info
+      const res=await registerUser(email, password, phone);
+      console.log(res)
+     
       setParentInfo({ email, password, phone, termsChecked, offersChecked });
       nextStep();
       return;
@@ -63,6 +90,8 @@ export default function Step1({ nextStep, setParentInfo }) {
       setErrors(newErrors);
     } else {
       setErrors({});
+      const res=await registerUser(email, password, phone);
+      console.log(res)
       setParentInfo({ email, password, phone, termsChecked, offersChecked });
       nextStep();
     }

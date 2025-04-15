@@ -51,7 +51,7 @@ export default function SignupPage() {
         {step === 1 && (
           <Step1 nextStep={() => setStep(2)} setParentInfo={setParentInfo} />
         )}
-        {step === 2 && <Step2 nextStep={() => setStep(3)} />}
+        {step === 2 && <Step2 nextStep={() => setStep(5)} parentInfo={parentInfo} />}
         {step === 3 && (
           <Step3 nextStep={() => setStep(4)} setKidsCount={setKidsCount} />
         )}
