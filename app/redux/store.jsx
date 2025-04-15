@@ -1,8 +1,8 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { persistReducer, persistStore } from "redux-persist";
 import storage from "redux-persist/lib/storage"; // defaults to localStorage for web
-import resetPasswordReducer from "./features/resetPasswordSlice"; 
-import authReducer from "./features/authSlice";
+import resetPasswordReducer from "./features/auth/resetPasswordSlice"; 
+import authReducer from "./features/auth/authSlice";
 
 // Persist config for auth reducer
 const authPersistConfig = {

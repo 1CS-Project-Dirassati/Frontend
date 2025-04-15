@@ -6,14 +6,17 @@ import Input_Password  from "@/components/ui/input_password";
 import { useState,useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSelector,useDispatch } from "react-redux";
-import { setToken } from "../redux/features/authSlice";
-
+import { setToken } from "../redux/features/auth/authSlice";
+import {persistor} from "../redux/store";
+import { resetApp } from "../redux/features/resetSlice";
 export default function SignInPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [status,setStatus] = useState("");
   const dispatch = useDispatch();
+
+
   const token = useSelector((state) => state.auth.token);
 
   const handleChangeEmail = (value) => {

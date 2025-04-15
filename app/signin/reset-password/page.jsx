@@ -5,7 +5,7 @@ import Input from "@/components/ui/AntInput";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {  useDispatch,useSelector } from "react-redux";
-import { setEmail,setOtp } from "../../redux/features/resetPasswordSlice";
+import { setEmail,setOtp } from "../../redux/features/auth/resetPasswordSlice";
 import style from "../style.module.css"
 export default function ResetPassword(){
   const extractOtpFromMessage = (message) => {
