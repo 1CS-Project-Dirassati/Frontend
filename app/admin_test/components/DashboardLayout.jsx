@@ -95,8 +95,20 @@ const DashboardLayout = ({ children }) => {
     {
       key: "schedule",
       icon: <CalendarOutlined />,
-      label: "Schedule",
+      label: "Schedule manager for admin",
       href: "/admin_test/schedule",
+    },
+    {
+      key: "schedule for student",
+      icon: <CalendarOutlined />,
+      label: "Schedule for student",
+      href: "/admin_test/studentSchedule",
+    },
+    {
+      key: "schedule for teacher",
+      icon: <CalendarOutlined />,
+      label: "Schedule for teacher",
+      href: "/admin_test/teacherSchedule",
     },
     {
       key: "attendance",

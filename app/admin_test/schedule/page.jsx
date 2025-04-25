@@ -1,7 +1,8 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -26,382 +27,574 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  useSortable,
-  horizontalListSortingStrategy,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { Calendar, Plus, Trash2, Users } from "lucide-react";
-import { studentsData } from "../data/studentsData";
-
-const SortableSession = ({ id, session, onDelete }) => {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  const subjectColors = {
-    Math: "bg-blue-500",
-    Science: "bg-green-500",
-    English: "bg-purple-500",
-    History: "bg-orange-500",
-    Art: "bg-pink-500",
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      className={`p-4 rounded-lg shadow-md ${
-        subjectColors[session.subject] || "bg-secondary"
-      } text-background cursor-grab hover:scale-105 transition-all duration-300 flex justify-between items-center`}
-    >
-      <div>
-        <p className="font-semibold">{session.subject}</p>
-        <p className="text-sm">{session.teacher}</p>
-        <p className="text-sm">{session.room}</p>
-      </div>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => onDelete(id)}
-        className="text-background hover:bg-red-500 hover:text-background"
-      >
-        <Trash2 className="w-4 h-4" />
-      </Button>
-    </div>
-  );
-};
-
-const SortableCell = ({ id, session }) => {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      className={`p-2 border-2 rounded-lg min-h-[100px] bg-background/50 ${
-        session ? "border-secondary" : "border-border"
-      } transition-all duration-300 hover:bg-accent/10`}
-    >
-      {session ? (
-        <div className="text-text">
-          <p className="font-semibold">{session.subject}</p>
-          <p className="text-sm">{session.teacher}</p>
-          <p className="text-sm">{session.room}</p>
-        </div>
-      ) : (
-        <p className="text-text/50 text-center">Drag session here</p>
-      )}
-    </div>
-  );
-};
+import { Calendar, Plus, Trash2, Globe, Edit } from "lucide-react";
 
 export default function Schedule() {
-  const [grade, setGrade] = useState("9th");
-  const [sessions, setSessions] = useState([
-    {
-      id: "1",
-      subject: "Math",
-      teacher: "Mr. Smith",
-      room: "A-101",
-      grade: "9th",
+  const [groupId, setGroupId] = useState("1");
+  const [language, setLanguage] = useState("ar");
+  const [timetables, setTimetables] = useState({
+    "1": {
+      "الأحد": {
+        "08:00": { id: "1", subject: "العربية", teacher: "فاطمة حداد", room: "قاعة أ-101", groupId: "1" },
+        "09:00": null,
+        "10:00": null,
+        "11:00": null,
+        "13:00": null,
+        "14:00": null,
+        "15:00": null,
+        "16:00": null,
+      },
+      "الإثنين": {
+        "08:00": null,
+        "09:00": { id: "2", subject: "رياضيات", teacher: "ياسين صغير", room: "قاعة أ-102", groupId: "1" },
+        "10:00": null,
+        "11:00": null,
+        "13:00": null,
+        "14:00": null,
+        "15:00": null,
+        "16:00": null,
+      },
+      "الثلاثاء": {
+        "08:00": null,
+        "09:00": null,
+        "10:00": { id: "3", subject: "فرنسية", teacher: "خديجة بن عمر", room: "قاعة أ-103", groupId: "1" },
+        "11:00": null,
+        "13:00": null,
+        "14:00": null,
+        "15:00": null,
+        "16:00": null,
+      },
+      "الأربعاء": {
+        "08:00": null,
+        "09:00": null,
+        "10:00": null,
+        "11:00": null,
+        "13:00": null,
+        "14:00": null,
+        "15:00": null,
+        "16:00": null,
+      },
+      "الخميس": {
+        "08:00": null,
+        "09:00": null,
+        "10:00": null,
+        "11:00": null,
+        "13:00": null,
+        "14:00": null,
+        "15:00": null,
+        "16:00": null,
+      },
     },
-    {
-      id: "2",
-      subject: "Science",
-      teacher: "Ms. Johnson",
-      room: "B-202",
-      grade: "9th",
+    "2": {
+      "الأحد": {
+        "08:00": null,
+        "09:00": null,
+        "10:00": null,
+        "11:00": null,
+        "13:00": null,
+        "14:00": null,
+        "15:00": null,
+        "16:00": null,
+      },
+      "الإثنين": {
+        "08:00": null,
+        "09:00": null,
+        "10:00": null,
+        "11:00": null,
+        "13:00": null,
+        "14:00": null,
+        "15:00": null,
+        "16:00": null,
+      },
+      "الثلاثاء": {
+        "08:00": null,
+        "09:00": null,
+        "10:00": null,
+        "11:00": null,
+        "13:00": null,
+        "14:00": null,
+        "15:00": null,
+        "16:00": null,
+      },
+      "الأربعاء": {
+        "08:00": null,
+        "09:00": null,
+        "10:00": null,
+        "11:00": null,
+        "13:00": null,
+        "14:00": null,
+        "15:00": null,
+        "16:00": null,
+      },
+      "الخميس": {
+        "08:00": null,
+        "09:00": null,
+        "10:00": null,
+        "11:00": null,
+        "13:00": null,
+        "14:00": null,
+        "15:00": null,
+        "16:00": null,
+      },
     },
-    {
-      id: "3",
-      subject: "English",
-      teacher: "Mrs. Brown",
-      room: "C-303",
-      grade: "10th",
-    },
-    {
-      id: "4",
-      subject: "History",
-      teacher: "Mr. Davis",
-      room: "D-404",
-      grade: "10th",
-    },
-    {
-      id: "5",
-      subject: "Art",
-      teacher: "Ms. Wilson",
-      room: "E-505",
-      grade: "11th",
-    },
-  ]);
-  const [timetable, setTimetable] = useState({
-    Monday: { "08:00": null, "09:00": null, "10:00": null },
-    Tuesday: { "08:00": null, "09:00": null, "10:00": null },
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newSession, setNewSession] = useState({
+  const [dialogMode, setDialogMode] = useState("add"); // "add" or "edit"
+  const [currentSession, setCurrentSession] = useState({
+    day: "",
+    hour: "",
     subject: "",
     teacher: "",
     room: "",
-    grade,
+    id: "",
   });
-  const router = useRouter();
 
-  const sensors = useSensors(useSensor(PointerSensor));
-
-  const handleDragEnd = (event) => {
-    const { active, over } = event;
-    if (!over) return;
-
-    const session = sessions.find((s) => s.id === active.id);
-    if (!session || session.grade !== grade) return;
-
-    const [day, hour] = over.id.split("-");
-    if (timetable[day][hour]) {
-      alert("Slot already occupied! Clear it first.");
-      return;
-    }
-
-    setTimetable((prev) => ({
-      ...prev,
-      [day]: {
-        ...prev[day],
-        [hour]: session,
+  const translations = {
+    ar: {
+      title: (group) => `إدارة الجدول الزمني - ${group}`,
+      cardTitle: "إدارة الجدول الأسبوعي",
+      addSession: "إضافة حصة",
+      days: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس"],
+      subjects: {
+        العربية: "العربية",
+        رياضيات: "رياضيات",
+        فرنسية: "فرنسية",
+        "تربية إسلامية": "تربية إسلامية",
+        "تربية مدنية": "تربية مدنية",
+        علوم: "علوم",
+        تاريخ: "تاريخ",
+        جغرافيا: "جغرافيا",
+        إنجليزية: "إنجليزية",
+        فيزياء: "فيزياء",
+        كيمياء: "كيمياء",
+        أحياء: "أحياء",
+        فلسفة: "فلسفة",
       },
-    }));
+      noSession: "لا يوجد حصة",
+      timeLabel: "الوقت",
+      toggleLanguage: "الفرنسية",
+      dialogTitleAdd: "إضافة حصة جديدة",
+      dialogTitleEdit: "تعديل الحصة",
+      dayLabel: "اليوم",
+      hourLabel: "الساعة",
+      subjectLabel: "المادة",
+      teacherLabel: "الأستاذ",
+      roomLabel: "القاعة",
+      cancel: "إلغاء",
+      add: "إضافة",
+      save: "حفظ",
+      delete: "حذف",
+      selectGroup: "اختر المجموعة",
+      confirmOverwrite: "هذه الخانة تحتوي على حصة. هل تريد استبدالها؟",
+    },
+    fr: {
+      title: (group) => `Gestion de l'emploi du temps - ${group}`,
+      cardTitle: "Gestion de l'emploi du temps hebdomadaire",
+      addSession: "Ajouter une session",
+      days: ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi"],
+      subjects: {
+        العربية: "Arabe",
+        رياضيات: "Mathématiques",
+        فرنسية: "Français",
+        "تربية إسلامية": "Éducation islamique",
+        "تربية مدنية": "Éducation civique",
+        علوم: "Sciences",
+        تاريخ: "Histoire",
+        جغرافيا: "Géographie",
+        إنجليزية: "Anglais",
+        فيزياء: "Physique",
+        كيمياء: "Chimie",
+        أحياء: "Biologie",
+        فلسفة: "Philosophie",
+      },
+      noSession: "Aucune session",
+      timeLabel: "Heure",
+      toggleLanguage: "Arabe",
+      dialogTitleAdd: "Ajouter une nouvelle session",
+      dialogTitleEdit: "Modifier la session",
+      dayLabel: "Jour",
+      hourLabel: "Heure",
+      subjectLabel: "Matière",
+      teacherLabel: "Professeur",
+      roomLabel: "Salle",
+      cancel: "Annuler",
+      add: "Ajouter",
+      save: "Enregistrer",
+      delete: "Supprimer",
+      selectGroup: "Sélectionner le groupe",
+      confirmOverwrite: "Cette case contient une session. Voulez-vous la remplacer ?",
+    },
   };
 
-  const addSession = () => {
-    if (!newSession.subject || !newSession.teacher || !newSession.room) {
-      alert("Please fill all fields.");
+  const hours = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"];
+
+  // Hardcoded boilerplate data
+  const groups = [
+    { id: "1", name: "3أ" },
+    { id: "2", name: "3ب" },
+  ];
+  const teachers = [
+    { id: "1", name: "فاطمة حداد" },
+    { id: "2", name: "ياسين صغير" },
+    { id: "3", name: "خديجة بن عمر" },
+    { id: "4", name: "محمد خروبي" },
+    { id: "5", name: "ليلى بوزيان" },
+  ];
+
+  // Initialize timetable for new groups
+  useEffect(() => {
+    if (!timetables[groupId]) {
+      const emptyTimetable = {};
+      translations.ar.days.forEach((day) => {
+        emptyTimetable[day] = {};
+        hours.forEach((hour) => {
+          emptyTimetable[day][hour] = null;
+        });
+      });
+      setTimetables((prev) => ({
+        ...prev,
+        [groupId]: emptyTimetable,
+      }));
+    }
+  }, [groupId]);
+
+  const toggleLanguage = () => {
+    setLanguage(language === "ar" ? "fr" : "ar");
+  };
+
+  const openAddDialog = () => {
+    setDialogMode("add");
+    setCurrentSession({
+      day: translations.ar.days[0],
+      hour: hours[0],
+      subject: "",
+      teacher: "",
+      room: "",
+      id: "",
+    });
+    setIsDialogOpen(true);
+  };
+
+  const openEditDialog = (day, hour, session) => {
+    setDialogMode("edit");
+    setCurrentSession({
+      day,
+      hour,
+      subject: session.subject,
+      teacher: session.teacher,
+      room: session.room,
+      id: session.id,
+    });
+    setIsDialogOpen(true);
+  };
+
+  const saveSession = () => {
+    if (!currentSession.day || !currentSession.hour || !currentSession.subject || !currentSession.teacher || !currentSession.room) {
+      alert(language === "ar" ? "يرجى ملء جميع الحقول." : "Veuillez remplir tous les champs.");
       return;
     }
-    const id = `${Date.now()}`;
-    setSessions([...sessions, { id, ...newSession, grade }]);
-    setNewSession({ subject: "", teacher: "", room: "", grade });
+
+    // Check if slot is occupied (for add mode)
+    if (dialogMode === "add" && timetables[groupId][currentSession.day][currentSession.hour]) {
+      const confirm = window.confirm(translations[language].confirmOverwrite);
+      if (!confirm) return;
+    }
+
+    const sessionData = {
+      id: dialogMode === "edit" ? currentSession.id : `${Date.now()}`,
+      subject: currentSession.subject,
+      teacher: currentSession.teacher,
+      room: currentSession.room,
+      groupId,
+    };
+
+    setTimetables((prev) => ({
+      ...prev,
+      [groupId]: {
+        ...prev[groupId],
+        [currentSession.day]: {
+          ...prev[groupId][currentSession.day],
+          [currentSession.hour]: sessionData,
+        },
+      },
+    }));
+
+    setIsDialogOpen(false);
+    setCurrentSession({ day: "", hour: "", subject: "", teacher: "", room: "", id: "" });
+  };
+
+  const deleteSession = (day, hour) => {
+    setTimetables((prev) => ({
+      ...prev,
+      [groupId]: {
+        ...prev[groupId],
+        [day]: {
+          ...prev[groupId][day],
+          [hour]: null,
+        },
+      },
+    }));
     setIsDialogOpen(false);
   };
 
-  const deleteSession = (id) => {
-    setSessions(sessions.filter((s) => s.id !== id));
-    setTimetable((prev) => {
-      const newTimetable = { ...prev };
-      Object.keys(newTimetable).forEach((day) => {
-        Object.keys(newTimetable[day]).forEach((hour) => {
-          if (newTimetable[day][hour]?.id === id) {
-            newTimetable[day][hour] = null;
-          }
-        });
+  const clearHour = (hour) => {
+    setTimetables((prev) => {
+      const newTimetables = { ...prev };
+      Object.keys(newTimetables[groupId]).forEach((day) => {
+        newTimetables[groupId][day][hour] = null;
       });
-      return newTimetable;
+      return newTimetables;
     });
   };
 
-  const clearDay = (day) => {
-    setTimetable((prev) => ({
-      ...prev,
-      [day]: { "08:00": null, "09:00": null, "10:00": null },
-    }));
+  const groupName = groups.find((g) => g.id === groupId)?.name || translations[language].selectGroup;
+
+  const subjectColors = {
+    العربية: "bg-blue-600",
+    رياضيات: "bg-green-600",
+    فرنسية: "bg-purple-600",
+    "تربية إسلامية": "bg-orange-600",
+    "تربية مدنية": "bg-pink-600",
+    علوم: "bg-teal-600",
+    تاريخ: "bg-yellow-600",
+    جغرافيا: "bg-indigo-600",
+    إنجليزية: "bg-red-600",
+    فيزياء: "bg-cyan-600",
+    كيمياء: "bg-rose-600",
+    أحياء: "bg-lime-600",
+    فلسفة: "bg-violet-600",
   };
 
-  const days = ["Monday", "Tuesday"];
-  const hours = ["08:00", "09:00", "10:00"];
-
   return (
-    <div className="p-4 min-h-screen bg-background">
+    <div
+      className="p-4 min-h-screen bg-gradient-to-b from-beige-100 to-slate-200"
+      dir={language === "ar" ? "rtl" : "ltr"}
+    >
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-text mb-8">
-          Weekly Schedule - {grade}
-        </h1>
-        <Card className="bg-background border-border shadow-xl rounded-xl mb-6">
+        <div className="flex justify-between items-center mb-8">
+          <motion.h1
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-4xl font-bold text-slate-800 text-center"
+          >
+            {translations[language].title(groupName)}
+          </motion.h1>
+          <Button
+            onClick={toggleLanguage}
+            className="bg-slate-600 hover:bg-slate-700 text-white flex items-center gap-2"
+          >
+            <Globe className="w-5 h-5" />
+            {translations[language].toggleLanguage}
+          </Button>
+        </div>
+        <Card className="bg-white/90 border-slate-300 shadow-xl rounded-xl mb-6">
           <CardHeader>
-            <CardTitle className="text-text flex items-center gap-2">
-              <Calendar className="w-6 h-6" /> Schedule Management
+            <CardTitle className="text-slate-800 flex items-center gap-2">
+              <Calendar className="w-6 h-6 text-slate-600" />
+              {translations[language].cardTitle}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex flex-col sm:flex-row gap-4 items-center">
-              <Select value={grade} onValueChange={setGrade}>
-                <SelectTrigger className="w-full sm:w-48 border-border">
-                  <SelectValue placeholder="Select Grade" />
+              <Select value={groupId} onValueChange={setGroupId}>
+                <SelectTrigger className="w-full sm:w-48 border-slate-300">
+                  <SelectValue placeholder={translations[language].selectGroup} />
                 </SelectTrigger>
                 <SelectContent>
-                  {["9th", "10th", "11th", "12th"].map((g) => (
-                    <SelectItem key={g} value={g}>
-                      {g} Grade
+                  {groups.map((group) => (
+                    <SelectItem key={group.id} value={group.id}>
+                      {group.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <Button
-                onClick={() => setIsDialogOpen(true)}
-                className="bg-secondary hover:bg-accent text-background"
+                onClick={openAddDialog}
+                className="bg-slate-600 hover:bg-slate-700 text-white"
               >
-                <Plus className="w-4 h-4 mr-2" /> Add Session
+                <Plus className="w-4 h-4 mr-2" />
+                {translations[language].addSession}
               </Button>
             </div>
           </CardContent>
         </Card>
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <Card className="bg-background border-border shadow-xl rounded-xl">
-            <CardHeader>
-              <CardTitle className="text-text">Available Sessions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext
-                  items={sessions
-                    .filter((s) => s.grade === grade)
-                    .map((s) => s.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <div className="space-y-4">
-                    {sessions
-                      .filter((s) => s.grade === grade)
-                      .map((session) => (
-                        <SortableSession
-                          key={session.id}
-                          id={session.id}
-                          session={session}
-                          onDelete={deleteSession}
-                        />
-                      ))}
-                    {sessions.filter((s) => s.grade === grade).length === 0 && (
-                      <p className="text-text/50 text-center">
-                        No sessions available
-                      </p>
-                    )}
-                  </div>
-                </SortableContext>
-              </DndContext>
-            </CardContent>
-          </Card>
-          <Card className="bg-background border-border shadow-xl rounded-xl lg:col-span-3">
-            <CardHeader>
-              <CardTitle className="text-text">Weekly Timetable</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="hover:bg-accent/10">
-                      <TableHead className="w-24">Day</TableHead>
-                      {hours.map((hour) => (
-                        <TableHead key={hour} className="text-center">
-                          {hour}
-                        </TableHead>
-                      ))}
-                      <TableHead className="w-24">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {days.map((day) => (
-                      <TableRow key={day} className="hover:bg-accent/10">
-                        <TableCell className="font-semibold text-text">
-                          {day}
-                        </TableCell>
-                        {hours.map((hour) => (
-                          <TableCell key={`${day}-${hour}`} className="p-2">
-                            <DndContext
-                              sensors={sensors}
-                              collisionDetection={closestCenter}
-                              onDragEnd={handleDragEnd}
-                            >
-                              <SortableContext
-                                items={[`${day}-${hour}`]}
-                                strategy={horizontalListSortingStrategy}
-                              >
-                                <SortableCell
-                                  id={`${day}-${hour}`}
-                                  session={timetable[day][hour]}
-                                />
-                              </SortableContext>
-                            </DndContext>
-                          </TableCell>
-                        ))}
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            onClick={() => clearDay(day)}
-                            className="text-red-500 hover:bg-red-500 hover:text-background"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
+        <Card className="bg-white/90 border-slate-300 shadow-xl rounded-xl">
+          <CardHeader>
+            <CardTitle className="text-slate-800">{translations[language].cardTitle}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-100 hover:bg-slate-200">
+                    <TableHead
+                      className={`w-24 font-semibold text-slate-800 ${
+                        language === "ar" ? "text-right" : "text-left"
+                      }`}
+                    >
+                      {translations[language].timeLabel}
+                    </TableHead>
+                    {translations[language].days.map((day) => (
+                      <TableHead
+                        key={day}
+                        className="text-center text-slate-800 font-semibold"
+                      >
+                        {day}
+                      </TableHead>
                     ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                    <TableHead className="w-24 text-center text-slate-800 font-semibold">
+                      {language === "ar" ? "الإجراءات" : "Actions"}
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {hours.map((hour) => (
+                    <TableRow
+                      key={hour}
+                      className="hover:bg-slate-50 transition-colors"
+                    >
+                      <TableCell
+                        className={`font-semibold text-slate-800 ${
+                          language === "ar" ? "text-right" : "text-left"
+                        }`}
+                      >
+                        {hour}
+                      </TableCell>
+                      {translations[language].days.map((day, index) => (
+                        <TableCell
+                          key={`${hour}-${day}`}
+                          className={`p-2 cursor-pointer ${timetables[groupId]?.[translations.ar.days[index]]?.[hour] ? subjectColors[timetables[groupId][translations.ar.days[index]][hour].subject] || "bg-slate-500" : "bg-slate-100"} text-white`}
+                          onClick={() =>
+                            timetables[groupId]?.[translations.ar.days[index]]?.[hour] &&
+                            openEditDialog(translations.ar.days[index], hour, timetables[groupId][translations.ar.days[index]][hour])
+                          }
+                        >
+                          {timetables[groupId]?.[translations.ar.days[index]]?.[hour] ? (
+                            <div>
+                              <p className="font-semibold">{translations[language].subjects[timetables[groupId][translations.ar.days[index]][hour].subject]}</p>
+                              <p className="text-sm">{timetables[groupId][translations.ar.days[index]][hour].teacher}</p>
+                              <p className="text-sm">{timetables[groupId][translations.ar.days[index]][hour].room}</p>
+                            </div>
+                          ) : (
+                            <p className="text-slate-400 text-center">{translations[language].noSession}</p>
+                          )}
+                        </TableCell>
+                      ))}
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          onClick={() => clearHour(hour)}
+                          className="text-red-500 hover:bg-red-500 hover:text-white"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="bg-background text-text rounded-lg">
+          <DialogContent className="bg-white/90 text-slate-800 rounded-lg">
             <DialogHeader>
-              <DialogTitle>Add New Session</DialogTitle>
+              <DialogTitle>
+                {dialogMode === "add" ? translations[language].dialogTitleAdd : translations[language].dialogTitleEdit}
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <label className="text-text font-semibold">Subject</label>
-                <input
-                  type="text"
-                  value={newSession.subject}
-                  onChange={(e) =>
-                    setNewSession({ ...newSession, subject: e.target.value })
-                  }
-                  className="w-full border-border rounded-md p-2 bg-background text-text"
-                  placeholder="e.g., Math"
-                />
+                <label className="text-slate-800 font-semibold">
+                  {translations[language].dayLabel}
+                </label>
+                <Select
+                  value={currentSession.day}
+                  onValueChange={(value) => setCurrentSession({ ...currentSession, day: value })}
+                >
+                  <SelectTrigger className="w-full border-slate-300">
+                    <SelectValue placeholder={translations[language].dayLabel} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {translations.ar.days.map((day) => (
+                      <SelectItem key={day} value={day}>
+                        {translations[language].days[translations.ar.days.indexOf(day)]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
-                <label className="text-text font-semibold">Teacher</label>
-                <input
-                  type="text"
-                  value={newSession.teacher}
-                  onChange={(e) =>
-                    setNewSession({ ...newSession, teacher: e.target.value })
-                  }
-                  className="w-full border-border rounded-md p-2 bg-background text-text"
-                  placeholder="e.g., Mr. Smith"
-                />
+                <label className="text-slate-800 font-semibold">
+                  {translations[language].hourLabel}
+                </label>
+                <Select
+                  value={currentSession.hour}
+                  onValueChange={(value) => setCurrentSession({ ...currentSession, hour: value })}
+                >
+                  <SelectTrigger className="w-full border-slate-300">
+                    <SelectValue placeholder={translations[language].hourLabel} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hours.map((hour) => (
+                      <SelectItem key={hour} value={hour}>
+                        {hour}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
-                <label className="text-text font-semibold">Room</label>
+                <label className="text-slate-800 font-semibold">
+                  {translations[language].subjectLabel}
+                </label>
+                <Select
+                  value={currentSession.subject}
+                  onValueChange={(value) => setCurrentSession({ ...currentSession, subject: value })}
+                >
+                  <SelectTrigger className="w-full border-slate-300">
+                    <SelectValue placeholder={translations[language].subjectLabel} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(translations.ar.subjects).map((subject) => (
+                      <SelectItem key={subject} value={subject}>
+                        {translations[language].subjects[subject]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-slate-800 font-semibold">
+                  {translations[language].teacherLabel}
+                </label>
+                <Select
+                  value={currentSession.teacher}
+                  onValueChange={(value) => setCurrentSession({ ...currentSession, teacher: value })}
+                >
+                  <SelectTrigger className="w-full border-slate-300">
+                    <SelectValue placeholder={translations[language].teacherLabel} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {teachers.map((teacher) => (
+                      <SelectItem key={teacher.id} value={teacher.name}>
+                        {teacher.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-slate-800 font-semibold">
+                  {translations[language].roomLabel}
+                </label>
                 <input
                   type="text"
-                  value={newSession.room}
-                  onChange={(e) =>
-                    setNewSession({ ...newSession, room: e.target.value })
-                  }
-                  className="w-full border-border rounded-md p-2 bg-background text-text"
-                  placeholder="e.g., A-101"
+                  value={currentSession.room}
+                  onChange={(e) => setCurrentSession({ ...currentSession, room: e.target.value })}
+                  className="w-full border-slate-300 rounded-md p-2 bg-white text-slate-800"
+                  placeholder={language === "ar" ? "مثال: قاعة أ-101" : "Ex. : Salle A-101"}
                 />
               </div>
             </div>
@@ -409,15 +602,24 @@ export default function Schedule() {
               <Button
                 variant="outline"
                 onClick={() => setIsDialogOpen(false)}
-                className="border-border hover:bg-accent"
+                className="border-slate-300 hover:bg-slate-200"
               >
-                Cancel
+                {translations[language].cancel}
               </Button>
+              {dialogMode === "edit" && (
+                <Button
+                  variant="destructive"
+                  onClick={() => deleteSession(currentSession.day, currentSession.hour)}
+                  className="bg-red-500 hover:bg-red-600 text-white"
+                >
+                  {translations[language].delete}
+                </Button>
+              )}
               <Button
-                onClick={addSession}
-                className="bg-secondary hover:bg-accent text-background"
+                onClick={saveSession}
+                className="bg-slate-600 hover:bg-slate-700 text-white"
               >
-                Add Session
+                {dialogMode === "add" ? translations[language].add : translations[language].save}
               </Button>
             </DialogFooter>
           </DialogContent>

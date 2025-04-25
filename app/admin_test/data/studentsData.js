@@ -805,6 +805,74 @@ let admins = [
   },
 ];
 
+export let schedules = [
+  {
+    id: "1",
+    group_id: 1,
+    teacher_id: 1,
+    subject: "رياضيات",
+    day: "الإثنين",
+    time: "08:00",
+  },
+  {
+    id: "2",
+    group_id: 1,
+    teacher_id: 2,
+    subject: "علوم",
+    day: "الثلاثاء",
+    time: "09:00",
+  },
+];
+
+// Return level object by ID
+export function getLevelById(id) {
+  return levels.find(l => l.id === id);
+}
+
+// Return group object by ID
+export function getGroupById(id) {
+  return groups.find(g => g.id === id);
+}
+
+// Get all groups for a given level_id
+export function getGroupsByLevelId(level_id) {
+  return groups.filter(g => g.level_id === level_id);
+}
+
+// Sessions with groupId as key
+export let sessions = [
+  {
+    id: "sess-1",
+    subject: "رياضيات",
+    teacher: "أ. بلال",
+    room: "101",
+    groupId: 1, // 1A
+    day: "الأحد",
+    time: "08:00"
+  },
+  {
+    id: "sess-2",
+    subject: "علوم",
+    teacher: "أ. فاطمة",
+    room: "102",
+    groupId: 5, // 6A
+    day: "الإثنين",
+    time: "09:00"
+  }
+];
+
+
+
+// Get sessions for a specific group (e.g., 1A)
+export function getSessionsForGroup(groupId) {
+  return sessions.filter(s => s.groupId === groupId);
+}
+
+// Add session
+export function addSession(newSession) {
+  sessions.push(newSession);
+}
+
 // Export functions
 export function getStudents() {
   return students;
@@ -863,4 +931,8 @@ export function addStudent(student) {
 
 export function getParentStudents(parent_id) {
   return students.filter((s) => s.parent_id === parent_id);
+}
+
+export function getGrades(){
+  return grades;
 }
