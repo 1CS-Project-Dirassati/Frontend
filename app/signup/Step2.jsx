@@ -10,15 +10,15 @@ export default function Step2({ nextStep, parentInfo }) {
 
   const handleVerify = async () => {
     try {
-      const res = await fetch("https://mangoxman.pythonanywhere.com/auth/verify-otp", {
+      const res = await fetch("https://dirassati.pythonanywhere.com/auth/verify-otp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          'Access-Control-Allow-Origin': '*',
+          "origin":"http://exmple.com"
         },
         body: JSON.stringify({
           email: parentInfo.email,
-          phoneNumber: parentInfo.phone,
-          password: parentInfo.password,
           otp: otp,
         }),
       });

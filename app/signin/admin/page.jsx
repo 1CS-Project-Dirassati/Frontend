@@ -1,14 +1,14 @@
 "use client";
-import style from "./style.module.css"
+import style from "../style.module.css"
 import  AntButton_primary   from "@/components/ui/antButton_primary ";
 import  Input  from "@/components/ui/antInput";
 import Input_Password  from "@/components/ui/input_password";
 import { useState,useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSelector,useDispatch } from "react-redux";
-import { setToken } from "../redux/features/auth/authSlice";
-import {persistor} from "../redux/store";
-import apiCall from "../../components/utils/apiCall";
+import { setToken } from "../../redux/features/auth/authSlice";
+import {persistor} from "../../redux/store";
+import apiCall from "../../../components/utils/apiCall";
 export default function SignInPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -24,7 +24,7 @@ export default function SignInPage() {
   };
   const signupClickHandler = async (e) => {
     try {
-      const dataUser = { email:email, password:password };
+      const dataUser = { email:email, password:password,role:"admin" };
       const result = await apiCall('POST', '/auth/login', dataUser);    
       const accessToken = result[0].access_token;
       const refreshToken = result[0].refresh_token;
