@@ -34,3 +34,41 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+
+## Admin_test Structure
+this url contains pages to be used later on in each actor's separate pages
+
+#### Actor's folder structure
+- Admin:
+    general stats
+    parents table
+    students table
+    approve students
+    timetable manager
+    groups manager
+    profile section
+
+- Parent:
+    general stats
+    sons' detailed table
+    chat with teacher (to be done later)
+    son's schedule page
+    payments (to be done later)
+
+- Student:
+    general stats
+    schedule
+    marks visualizer (to be done)
+    chat with teacher (to be done)
+    chat with students (to be done later)
+
+- Teacher:
+    general stats
+    shedule
+    add marks (to be done later)
+    chat with students
+    chat with parents
+
+
+
