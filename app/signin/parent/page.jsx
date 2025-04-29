@@ -26,10 +26,11 @@ export default function SignInPage() {
     try {
       const dataUser = { email:email, password:password,role:"parent" };
       const result = await apiCall('POST', '/auth/login', dataUser);    
-      const accessToken = result[0].access_token;
-      const refreshToken = result[0].refresh_token;
-    if (result[1] === 200){ 
-      dispatch(setToken({accessToken:accessToken,refreshToken:refreshToken})); 
+      const accessToken = result.access_token;
+      const refreshToken = result.refresh_token;
+    if (result.status === true){ 
+      dispatch(setToken({accessToken:accessToken,refreshToken:refreshToken,role:"parent"})); 
+      router.push("/parent")
       
     } else {
       setStatus("Invalid email or password");

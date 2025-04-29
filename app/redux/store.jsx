@@ -8,7 +8,7 @@ import authReducer from "./features/auth/authSlice";
 const authPersistConfig = {
   key: 'auth',
   storage,
-  whitelist: ['accessToken',"refreshToken", 'isAuthenticated'] // only these will be persisted
+  whitelist: ['accessToken',"refreshToken", 'isAuthenticated',"role"] // only these will be persisted
 };
 const resetPasswordPersistConfig = {
   key: 'resetPassword',

@@ -42,7 +42,7 @@ export default function Step1({ nextStep, setParentInfo }) {
           'Access-Control-Allow-Origin': '*',
           "origin":"http://exmple.com"
         },
-        body: JSON.stringify({ email, password, phone_number: phone ,role,first_name,last_name}),
+        body: JSON.stringify({ email, password, phone_number: `+123${phone}` ,role,first_name,last_name}),
       });
   
       if (!res.ok) {
@@ -70,9 +70,7 @@ export default function Step1({ nextStep, setParentInfo }) {
     }
 
     const newErrors = {};
-    if (phone.length !== 10) {
-      newErrors.phone = "Phone number must be exactly 10 digits.";
-    }
+
     if (!emailRegex.test(email)) {
       newErrors.email = "Invalid email format.";
     } else {
