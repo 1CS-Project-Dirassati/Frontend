@@ -4,7 +4,7 @@ import  AntButton_primary   from "@/components/ui/antButton_primary ";
 import { useState,useEffect } from "react";
 import OTP from "@/components/ui/OTPInput";
 import {  useDispatch ,useSelector} from "react-redux";
-import { verifyOTP,resetOTP } from "../../../redux/features/resetPasswordSlice";
+import { verifyOTP,resetOTP } from "../../../redux/features/auth/resetPasswordSlice";
 import { useRouter } from "next/navigation";
 
 export default function emailVerification() {

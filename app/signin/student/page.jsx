@@ -1,19 +1,22 @@
 "use client";
-import style from "./style.module.css"
+import style from "../style.module.css"
 import  AntButton_primary   from "@/components/ui/antButton_primary ";
 import  Input  from "@/components/ui/antInput";
 import Input_Password  from "@/components/ui/input_password";
 import { useState,useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSelector,useDispatch } from "react-redux";
-import { setToken } from "../redux/features/authSlice";
-
+import { setToken } from "../../redux/features/auth/authSlice";
+import {persistor} from "../../redux/store";
+import apiCall from "../../../components/utils/apiCall";
 export default function SignInPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [status,setStatus] = useState("");
   const dispatch = useDispatch();
+
+
   const token = useSelector((state) => state.auth.token);
 
   const handleChangeEmail = (value) => {
@@ -21,30 +24,22 @@ export default function SignInPage() {
   };
   const signupClickHandler = async (e) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
-        method: "POST",
-        headers: new Headers({
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }),
-        body: JSON.stringify({
-          email: email,
-          password: password,
-        }),
-      });
-  
-      const data = await response.json();
-  
-      if (response.ok) {
-        dispatch(setToken(data.token)); // ✅ Set token here
-      } else {
-        setStatus("Invalid email or password");
-      }
+      const dataUser = { email:email, password:password,role:"student" };
+      const result = await apiCall('POST', '/auth/login', dataUser);    
+      const accessToken = result.access_token;
+      const refreshToken = result.refresh_token;
+    if (result === true){ 
+      dispatch(setToken({accessToken:accessToken,refreshToken:refreshToken,role:"student"})); 
+      router.push("/student") 
+      
+    } else {
+      setStatus("Invalid email or password");
+    }
     } catch (error) {
       console.error("Login error:", error);
       setStatus("Something went wrong");
     }
-  };
+    };
 
   const handleChangePassword = (newValue) => {
     setStatus("");

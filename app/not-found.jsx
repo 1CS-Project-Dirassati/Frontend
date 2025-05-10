@@ -1,11 +1,11 @@
 "use client"
-import Image from "../assets/error.svg";
   export default function error(){
-  
+    console.log(localStorage.removeItem("persist:auth"))
+    console.log(localStorage.getItem("persist:auth"))
+
   return(
-    <div>
-      <h1>The page you are requesting is not available</h1>
-      <img src={"../assets/error.svg"}/>
+    <div style={{display:"flex", flexDirection:"column", justifyContent:"center", alignItems:"center", height:"100vh"}}>
+      <img src={"./error.svg"} style={{width:"500px"}}/>
     </div>
   )
 }

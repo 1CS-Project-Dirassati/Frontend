@@ -1,14 +1,14 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { persistReducer, persistStore } from "redux-persist";
 import storage from "redux-persist/lib/storage"; // defaults to localStorage for web
-import resetPasswordReducer from "./features/resetPasswordSlice"; 
-import authReducer from "./features/authSlice";
+import resetPasswordReducer from "./features/auth/resetPasswordSlice"; 
+import authReducer from "./features/auth/authSlice";
 
 // Persist config for auth reducer
 const authPersistConfig = {
   key: 'auth',
   storage,
-  whitelist: ['token', 'isAuthenticated'] // only these will be persisted
+  whitelist: ['accessToken',"refreshToken", 'isAuthenticated',"role"] // only these will be persisted
 };
 const resetPasswordPersistConfig = {
   key: 'resetPassword',

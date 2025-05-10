@@ -56,7 +56,7 @@ export default function ResetPassword() {
   const VerifyClickHandler = async (e) => {
     
     try{
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/verify-otp-reset`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/verify-otp-reset`, {
        method: "POST",
        headers: new Headers({
          'Content-Type': 'application/json',
@@ -64,7 +64,7 @@ export default function ResetPassword() {
        }),
        body: JSON.stringify({
          password: password,
-         phoneNumber: `+123${dataState.email}`,
+         phoneNumber: `${dataState.email}`,
          otp: dataState.otp,
  
        }),

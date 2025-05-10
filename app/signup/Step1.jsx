@@ -14,8 +14,11 @@ export default function Step1({ nextStep, setParentInfo }) {
 
   // Form state
   const [email, setEmail] = useState("");
+  const [first_name, setfirst_name] = useState("");
+  const [last_name, setlast_name] = useState("");
+
+  const [role, setrole] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [termsChecked, setTermsChecked] = useState(false);
   const [offersChecked, setOffersChecked] = useState(false);
@@ -29,18 +32,45 @@ export default function Step1({ nextStep, setParentInfo }) {
     return Promise.resolve(false);
   }
 
+  async function registerUser(email, password, phone,role,first_name,last_name) {
+    try {
+      const res = await fetch("https://dirassati.pythonanywhere.com/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          'Access-Control-Allow-Origin': '*',
+          "origin":"http://exmple.com"
+        },
+        body: JSON.stringify({ email, password, phone_number: `+123${phone}` ,role,first_name,last_name}),
+      });
+  
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${res.status}`);
+      }
+  
+      return await res.json();
+    } catch (err) {
+      console.error("Registration error:", err);
+      throw new Error(err.message || "Network request failed");
+    }
+  }
+  
+
+
   async function handleNext() {
     if (skipValidation) {
-      // Save parent's info
-      setParentInfo({ email, password, phone, termsChecked, offersChecked });
+      const res=await registerUser(email, password, phone,role,first_name,last_name);
+      console.log(res)
+     
+      setParentInfo({ email, password, phone, termsChecked, offersChecked,role });
       nextStep();
       return;
     }
 
     const newErrors = {};
-    if (phone.length !== 10) {
-      newErrors.phone = "Phone number must be exactly 10 digits.";
-    }
+
     if (!emailRegex.test(email)) {
       newErrors.email = "Invalid email format.";
     } else {
@@ -52,9 +82,7 @@ export default function Step1({ nextStep, setParentInfo }) {
     if (password.length < 8) {
       newErrors.password = "Password must be at least 8 characters long.";
     }
-    if (password !== confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match.";
-    }
+
     if (!termsChecked) {
       newErrors.terms = "You must agree to the Terms of use and Privacy Policy.";
     }
@@ -63,7 +91,10 @@ export default function Step1({ nextStep, setParentInfo }) {
       setErrors(newErrors);
     } else {
       setErrors({});
-      setParentInfo({ email, password, phone, termsChecked, offersChecked });
+      const res=await registerUser(email, password, phone,role,first_name,last_name);
+      console.log(res)
+      setParentInfo({ email, password, phone, termsChecked, offersChecked, role });
+
       nextStep();
     }
   }
@@ -108,17 +139,25 @@ export default function Step1({ nextStep, setParentInfo }) {
         {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
 
         {/* Confirm Password */}
+   
         <div>
           <Input
-            type="password"
-            placeholder="Confirm Password"
+            type="text"
+            placeholder="First Name"
             className="w-full"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            value={first_name}
+            onChange={(e) => setfirst_name(e.target.value)}
           />
-          {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
         </div>
-
+        <div>
+          <Input
+            type="text"
+            placeholder="Last Name"
+            className="w-full"
+            value={last_name}
+            onChange={(e) => setlast_name(e.target.value)}
+          />
+        </div>
         {/* Phone */}
         <div>
           <Input
@@ -130,7 +169,15 @@ export default function Step1({ nextStep, setParentInfo }) {
           />
           {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
         </div>
-
+        <div>
+          <Input
+            type="text"
+            placeholder="role"
+            className="w-full"
+            value={role}
+            onChange={(e) => setrole(e.target.value)}
+          />
+        </div>
         {/* Terms Checkbox */}
         <div className="flex items-center space-x-2">
           <Checkbox id="terms" checked={termsChecked} onCheckedChange={(checked) => setTermsChecked(checked)} />
