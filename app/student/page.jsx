@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import apiCall from "../../components/utils/apiCall";
+import { Spin, Alert, message } from "antd";
 
 import {
   Card as AntCard,
@@ -115,46 +118,97 @@ const SidePanel = styled(ShadcnCard)`
   right: 16px;
   top: 100px;
 `;
-import { useSelector } from "react-redux";
-
 
 export default function Home() {
-   const permision  = useSelector(state => state.auth.role);
- 
+  const permission = useSelector((state) => state.auth.role);
+  const userId = useSelector((state) => state.auth.userId);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [studentData, setStudentData] = useState(null);
+  const [attendanceData, setAttendanceData] = useState(null);
+  const [notesData, setNotesData] = useState(null);
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const [timeRange, setTimeRange] = useState(
     searchParams.get("timeRange") || "monthly"
   );
 
+  useEffect(() => {
+    const fetchStudentData = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`/api/students/${userId}`);
+        setStudentData(response.data);
+
+        // Fetch attendance data
+        const attendanceResponse = await axios.get(
+          `/api/students/${userId}/attendance`
+        );
+        setAttendanceData(attendanceResponse.data);
+
+        // Fetch notes data
+        const notesResponse = await axios.get(`/api/students/${userId}/notes`);
+        setNotesData(notesResponse.data);
+
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        message.error("Failed to load student data");
+        setLoading(false);
+      }
+    };
+
+    if (userId) {
+      fetchStudentData();
+    }
+  }, [userId]);
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return <Alert message="Error" description={error} type="error" showIcon />;
+  }
+
   const statsData = [
     {
-      name: "Total Students",
-      value: 1200,
-      change: "+5%",
-      color: "#1890ff",
-      info: "Total enrolled students this term",
-    },
-    {
-      name: "Total Parents",
-      value: 800,
-      change: "+3%",
-      color: "#52c41a",
-      info: "Active parent accounts linked",
-    },
-    {
-      name: "Active Sessions",
-      value: 45,
-      change: "-2%",
-      color: "#fa8c16",
-      info: "Classes currently in progress",
-    },
-    {
       name: "Attendance Rate",
-      value: 92,
+      value: attendanceData?.attendanceRate || 0,
       suffix: "%",
       color: "#722ed1",
-      info: "Average daily attendance",
+      info: "Your current attendance rate",
+    },
+    {
+      name: "Average Grade",
+      value: notesData?.averageGrade || 0,
+      suffix: "%",
+      color: "#1890ff",
+      info: "Your current average grade",
+    },
+    {
+      name: "Absences",
+      value: attendanceData?.totalAbsences || 0,
+      color: "#fa8c16",
+      info: "Total absences this semester",
+    },
+    {
+      name: "Late Arrivals",
+      value: attendanceData?.totalLates || 0,
+      color: "#52c41a",
+      info: "Total late arrivals",
     },
   ];
 
@@ -376,235 +430,177 @@ export default function Home() {
     setTimeRange(value);
     router.push(`/admin_test?timeRange=${value}`);
   };
-  if (permision === "student") {
 
-  return (
-    <div style={{ padding: "0 16px" }}>
-      <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
-        <Col>
-          <StyledHeader>School Dashboard</StyledHeader>
-        </Col>
-        <Col>
-          <Space size="middle">
-            <Select
-              value={timeRange}
-              onChange={handleTimeRangeChange}
-              options={[
-                { value: "daily", label: "Daily" },
-                { value: "weekly", label: "Weekly" },
-                { value: "monthly", label: "Monthly" },
-              ]}
-              style={{ width: 120 }}
-            />
-            <Button icon={<FilterOutlined />}>Filters</Button>
-            <Button icon={<ZoomInOutlined />}>Zoom</Button>
-            <Button type="primary" icon={<DownloadOutlined />}>
-              Export
-            </Button>
-          </Space>
-        </Col>
-      </Row>
+  if (permission === "student") {
+    return (
+      <div className="p-6">
+        <StyledHeader>Student Dashboard</StyledHeader>
 
-      {/* Hero Section: Area Chart with Overlapping Stat */}
-      <StyledSection>
-        <StyledSubHeader>
-          Key Metrics
-          <Tooltip title="Core school performance indicators">
-            <InfoCircleOutlined style={{ color: "#888" }} />
-          </Tooltip>
-        </StyledSubHeader>
+        {studentData && (
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold">
+              Welcome, {studentData.first_name} {studentData.last_name}
+            </h2>
+            <p className="text-gray-600">
+              Level: {studentData.level?.name} | Group:{" "}
+              {studentData.group?.name}
+            </p>
+          </div>
+        )}
+
         <Row gutter={[16, 16]}>
-          {statsData.map((stat) => (
-            <Col xs={24} sm={12} md={6} key={stat.name}>
-              <AntCard
-                hoverable
-                style={{ borderRadius: 8, border: "1px solid #e8e8e8" }}
-              >
+          {statsData.map((stat, index) => (
+            <Col xs={24} sm={12} md={6} key={index}>
+              <AntCard>
                 <Statistic
-                  title={
-                    <span>
-                      {stat.name}{" "}
-                      <Tooltip title={stat.info}>
-                        <InfoCircleOutlined
-                          style={{ fontSize: "12px", color: "#888" }}
-                        />
-                      </Tooltip>
-                    </span>
-                  }
+                  title={stat.name}
                   value={stat.value}
-                  suffix={stat.suffix || stat.change}
-                  valueStyle={{
-                    color: stat.color,
-                    fontSize: "24px",
-                    fontWeight: 500,
-                  }}
+                  suffix={stat.suffix}
+                  valueStyle={{ color: stat.color }}
                 />
+                <Tooltip title={stat.info}>
+                  <InfoCircleOutlined style={{ marginLeft: 8 }} />
+                </Tooltip>
               </AntCard>
             </Col>
           ))}
         </Row>
-      </StyledSection>
 
-      <StyledSection>
-        <StyledSubHeader>
-          Enrollment Trends
-          <Tooltip title="Track student and session growth">
-            <InfoCircleOutlined style={{ color: "#888" }} />
-          </Tooltip>
-        </StyledSubHeader>
-        <HeroChart>
-          <Chart
-            options={areaOptions}
-            series={areaSeries}
-            type="area"
-            height={400}
+        <StyledSection>
+          <StyledSubHeader>
+            Enrollment Trends
+            <Tooltip title="Track student and session growth">
+              <InfoCircleOutlined style={{ color: "#888" }} />
+            </Tooltip>
+          </StyledSubHeader>
+          <HeroChart>
+            <Chart
+              options={areaOptions}
+              series={areaSeries}
+              type="area"
+              height={400}
+            />
+          </HeroChart>
+        </StyledSection>
+
+        <StyledSection>
+          <StyledSubHeader>
+            Student Insights
+            <Tooltip title="Grade and attendance analysis">
+              <InfoCircleOutlined style={{ color: "#888" }} />
+            </Tooltip>
+          </StyledSubHeader>
+          <MasonryGrid>
+            <MasonryItem>
+              <h3 style={{ fontSize: "1.1rem", marginBottom: 12 }}>
+                Grade Distribution
+              </h3>
+              <Chart
+                options={barOptions}
+                series={barSeries}
+                type="bar"
+                height={300}
+              />
+            </MasonryItem>
+            <MasonryItem>
+              <h3 style={{ fontSize: "1.1rem", marginBottom: 12 }}>
+                Attendance Breakdown
+              </h3>
+              <Chart
+                options={donutOptions}
+                series={donutSeries}
+                type="donut"
+                height={250}
+              />
+            </MasonryItem>
+          </MasonryGrid>
+        </StyledSection>
+
+        <StyledSection>
+          <StyledSubHeader>
+            Performance Trends
+            <Tooltip title="Demographics and grades over time">
+              <InfoCircleOutlined style={{ color: "#888" }} />
+            </Tooltip>
+          </StyledSubHeader>
+          <Tabs
+            defaultActiveKey="1"
+            items={[
+              {
+                key: "1",
+                label: "Demographics",
+                children: (
+                  <ShadcnCard
+                    style={{
+                      borderRadius: 8,
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                      padding: "16px",
+                    }}
+                  >
+                    <Chart
+                      options={stackedAreaOptions}
+                      series={stackedAreaSeries}
+                      type="area"
+                      height={300}
+                    />
+                  </ShadcnCard>
+                ),
+              },
+              {
+                key: "2",
+                label: "Grade Fluctuations",
+                children: (
+                  <ShadcnCard
+                    style={{
+                      borderRadius: 8,
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                      padding: "16px",
+                    }}
+                  >
+                    <Chart
+                      options={candlestickOptions}
+                      series={candlestickSeries}
+                      type="candlestick"
+                      height={300}
+                    />
+                  </ShadcnCard>
+                ),
+              },
+            ]}
           />
-          {/* <OverlapStat>
-            <Statistic
-              title="Growth Rate"
-              value={5.2}
-              suffix="%"
-              valueStyle={{ color: "#52c41a", fontSize: "20px" }}
-            />
-          </OverlapStat> */}
-        </HeroChart>
-      </StyledSection>
+        </StyledSection>
 
-      {/* Masonry Grid: Bar and Donut */}
-      <StyledSection>
-        <StyledSubHeader>
-          Student Insights
-          <Tooltip title="Grade and attendance analysis">
-            <InfoCircleOutlined style={{ color: "#888" }} />
-          </Tooltip>
-        </StyledSubHeader>
-        <MasonryGrid>
-          <MasonryItem>
-            <h3 style={{ fontSize: "1.1rem", marginBottom: 12 }}>
-              Grade Distribution
-            </h3>
-            <Chart
-              options={barOptions}
-              series={barSeries}
-              type="bar"
-              height={300}
-            />
-          </MasonryItem>
-          <MasonryItem>
-            <h3 style={{ fontSize: "1.1rem", marginBottom: 12 }}>
-              Attendance Breakdown
-            </h3>
-            <Chart
-              options={donutOptions}
-              series={donutSeries}
-              type="donut"
-              height={250}
-            />
-          </MasonryItem>
-        </MasonryGrid>
-      </StyledSection>
-
-      {/* Tabbed Carousel: Stacked Area and Candlestick */}
-      <StyledSection>
-        <StyledSubHeader>
-          Performance Trends
-          <Tooltip title="Demographics and grades over time">
-            <InfoCircleOutlined style={{ color: "#888" }} />
-          </Tooltip>
-        </StyledSubHeader>
-        <Tabs
-          defaultActiveKey="1"
-          items={[
-            {
-              key: "1",
-              label: "Demographics",
-              children: (
-                <ShadcnCard
-                  style={{
-                    borderRadius: 8,
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                    padding: "16px",
-                  }}
-                >
-                  <Chart
-                    options={stackedAreaOptions}
-                    series={stackedAreaSeries}
-                    type="area"
-                    height={300}
-                  />
-                </ShadcnCard>
-              ),
-            },
-            {
-              key: "2",
-              label: "Grade Fluctuations",
-              children: (
-                <ShadcnCard
-                  style={{
-                    borderRadius: 8,
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                    padding: "16px",
-                  }}
-                >
-                  <Chart
-                    options={candlestickOptions}
-                    series={candlestickSeries}
-                    type="candlestick"
-                    height={300}
-                  />
-                </ShadcnCard>
-              ),
-            },
-          ]}
-        />
-      </StyledSection>
-
-      {/* Circular Cluster: Heatmap and Polar Area */}
-      <StyledSection>
-        <StyledSubHeader>
-          Activity & Feedback
-          <Tooltip title="Session activity and parent feedback">
-            <InfoCircleOutlined style={{ color: "#888" }} />
-          </Tooltip>
-        </StyledSubHeader>
-        <CircularCluster>
-          <CircularCard>
-            <Chart
-              options={heatmapOptions}
-              series={heatmapSeries}
-              type="heatmap"
-              height={300}
-              width={300}
-            />
-          </CircularCard>
-          <CircularCard>
-            <Chart
-              options={polarOptions}
-              series={polarSeries}
-              type="polarArea"
-              height={300}
-              width={300}
-            />
-          </CircularCard>
-        </CircularCluster>
-      </StyledSection>
-
-      {/* Side Panel: Treemap */}
-      {/* <SidePanel>
-        <h3 style={{ fontSize: "1.1rem", marginBottom: 12 }}>
-          Resource Allocation
-        </h3>
-        <Chart
-          options={treemapOptions}
-          series={treemapSeries}
-          type="treemap"
-          height={550}
-        />
-      </SidePanel> */}
-    </div>
-  );
-}
-else{
-  router.push("/signin")
-}
+        <StyledSection>
+          <StyledSubHeader>
+            Activity & Feedback
+            <Tooltip title="Session activity and parent feedback">
+              <InfoCircleOutlined style={{ color: "#888" }} />
+            </Tooltip>
+          </StyledSubHeader>
+          <CircularCluster>
+            <CircularCard>
+              <Chart
+                options={heatmapOptions}
+                series={heatmapSeries}
+                type="heatmap"
+                height={300}
+                width={300}
+              />
+            </CircularCard>
+            <CircularCard>
+              <Chart
+                options={polarOptions}
+                series={polarSeries}
+                type="polarArea"
+                height={300}
+                width={300}
+              />
+            </CircularCard>
+          </CircularCluster>
+        </StyledSection>
+      </div>
+    );
+  } else {
+    router.push("/signin");
+  }
 }

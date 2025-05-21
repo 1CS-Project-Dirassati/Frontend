@@ -81,10 +81,10 @@ const DashboardLayout = ({ children }) => {
       href: "/parent/sons",
     },
     {
-      key: "students unapproved",
+      key: "chat",
       icon: <TeamOutlined />,
       label: "Chat",
-      href: "/parent/unapproved",
+      href: "/parent/chat",
     },
     {
       key: "schedule",
@@ -97,14 +97,14 @@ const DashboardLayout = ({ children }) => {
       key: "attendance",
       icon: <Notebook />,
       label: "payments",
-      href: "/parent/attendance",
+      href: "/parent/payments",
     },
  
     {
       key: "profile",
       icon: <User />,
       label: "Profile",
-      href: "/parent/profile",
+      href: "/parent/parentProfile/1",
     },
   ];
 
@@ -238,7 +238,7 @@ const DashboardLayout = ({ children }) => {
                       </AvatarFallback>
                     </Avatar>
                     <span className="hidden sm:inline text-sm font-medium">
-                      Admin
+                      Hamid
                     </span>
                   </Button>
                 </DropdownMenuTrigger>

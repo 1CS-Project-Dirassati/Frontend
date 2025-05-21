@@ -824,6 +824,103 @@ export let schedules = [
   },
 ];
 
+
+export let attendance = {
+  s1: {
+    "2025-05-01": { status: "present", class_id: 101 },
+    "2025-05-02": { status: "late", class_id: 102 },
+    "2025-05-03": { status: "absent", class_id: 103 },
+    "2025-05-04": { status: "present", class_id: 104 },
+    "2025-05-05": { status: "present", class_id: 105 },
+  },
+  s2: {
+    "2025-05-01": { status: "present", class_id: 201 },
+    "2025-05-02": { status: "present", class_id: 202 },
+    "2025-05-03": { status: "late", class_id: 203 },
+    "2025-05-04": { status: "absent", class_id: 204 },
+    "2025-05-05": { status: "present", class_id: 205 },
+  },
+};
+
+export let marks = {
+  s1: {
+    math: [
+      { date: "2025-04-01", score: 85, max_score: 100 },
+      { date: "2025-04-15", score: 90, max_score: 100 },
+      { date: "2025-05-01", score: 88, max_score: 100 },
+    ],
+    science: [
+      { date: "2025-04-01", score: 78, max_score: 100 },
+      { date: "2025-04-15", score: 82, max_score: 100 },
+      { date: "2025-05-01", score: 85, max_score: 100 },
+    ],
+    english: [
+      { date: "2025-04-01", score: 92, max_score: 100 },
+      { date: "2025-04-15", score: 95, max_score: 100 },
+      { date: "2025-05-01", score: 90, max_score: 100 },
+    ],
+  },
+  s2: {
+    math: [
+      { date: "2025-04-01", score: 80, max_score: 100 },
+      { date: "2025-04-15", score: 85, max_score: 100 },
+      { date: "2025-05-01", score: 82, max_score: 100 },
+    ],
+    science: [
+      { date: "2025-04-01", score: 75, max_score: 100 },
+      { date: "2025-04-15", score: 80, max_score: 100 },
+      { date: "2025-05-01", score: 78, max_score: 100 },
+    ],
+    english: [
+      { date: "2025-04-01", score: 88, max_score: 100 },
+      { date: "2025-04-15", score: 90, max_score: 100 },
+      { date: "2025-05-01", score: 85, max_score: 100 },
+    ],
+  },
+};
+
+export let subjects = [
+  { id: 1, name: "Math" },
+  { id: 2, name: "Science" },
+  { id: 3, name: "English" },
+];
+
+export let feedback = {
+  s1: {
+    "2025-05-01": {
+      teacher_id: 1,
+      comment: "Amina is performing well but needs to focus on participation.",
+    },
+    "2025-05-03": {
+      teacher_id: 2,
+      comment: "Good progress in Science, keep up the effort!",
+    },
+  },
+  s2: {
+    "2025-05-02": {
+      teacher_id: 1,
+      comment: "Youssef shows great enthusiasm in Math.",
+    },
+    "2025-05-04": {
+      teacher_id: 3,
+      comment: "Needs to improve punctuality for classes.",
+    },
+  },
+};
+
+export let classes = {
+  101: { id: 101, subject_id: 1, date: "2025-05-01", teacher_id: 1 },
+  102: { id: 102, subject_id: 2, date: "2025-05-02", teacher_id: 2 },
+  103: { id: 103, subject_id: 3, date: "2025-05-03", teacher_id: 3 },
+  104: { id: 104, subject_id: 1, date: "2025-05-04", teacher_id: 1 },
+  105: { id: 105, subject_id: 2, date: "2025-05-05", teacher_id: 2 },
+  201: { id: 201, subject_id: 1, date: "2025-05-01", teacher_id: 1 },
+  202: { id: 202, subject_id: 2, date: "2025-05-02", teacher_id: 2 },
+  203: { id: 203, subject_id: 3, date: "2025-05-03", teacher_id: 3 },
+  204: { id: 204, subject_id: 1, date: "2025-05-04", teacher_id: 1 },
+  205: { id: 205, subject_id: 2, date: "2025-05-05", teacher_id: 2 },
+};
+
 // Return level object by ID
 export function getLevelById(id) {
   return levels.find(l => l.id === id);
