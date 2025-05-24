@@ -138,18 +138,22 @@ export default function Home() {
     const fetchStudentData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`/api/students/${userId}`);
-        setStudentData(response.data);
+        const response = await apiCall("get", `/api/students/${userId}`);
+        setStudentData(response);
 
         // Fetch attendance data
-        const attendanceResponse = await axios.get(
+        const attendanceResponse = await apiCall(
+          "get",
           `/api/students/${userId}/attendance`
         );
-        setAttendanceData(attendanceResponse.data);
+        setAttendanceData(attendanceResponse);
 
         // Fetch notes data
-        const notesResponse = await axios.get(`/api/students/${userId}/notes`);
-        setNotesData(notesResponse.data);
+        const notesResponse = await apiCall(
+          "get",
+          `/api/students/${userId}/notes`
+        );
+        setNotesData(notesResponse);
 
         setLoading(false);
       } catch (err) {

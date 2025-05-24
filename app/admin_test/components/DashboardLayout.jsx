@@ -9,6 +9,9 @@ import {
   CalendarOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  BookOutlined,
+  CreditCardOutlined,
+  ExclamationCircleOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -73,60 +76,48 @@ const DashboardLayout = ({ children }) => {
   };
 
   const menuItems = [
-    { key: "home", icon: <HomeOutlined />, label: "Home", href: "/admin_test" },
+    { key: "home", icon: <HomeOutlined />, label: "Home", href: "/admin" },
     {
-      key: "parents",
-      icon: <UserOutlined />,
-      label: "Parents",
-      href: "/admin_test/parents",
+      key: "unapproved",
+      icon: <ExclamationCircleOutlined />,
+      label: "Unapproved Students",
+      href: "/admin/unapproved",
     },
     {
       key: "students",
       icon: <TeamOutlined />,
       label: "Students",
-      href: "/admin_test/students",
+      href: "/admin/students",
     },
     {
-      key: "students unapproved",
+      key: "parents",
+      icon: <UserOutlined />,
+      label: "Parents",
+      href: "/admin/parents",
+    },
+    {
+      key: "teachers",
       icon: <TeamOutlined />,
-      label: "Students unapproved",
-      href: "/admin_test/unapproved",
-    },
-    {
-      key: "schedule",
-      icon: <CalendarOutlined />,
-      label: "Schedule manager for admin",
-      href: "/admin_test/schedule",
-    },
-    {
-      key: "schedule for student",
-      icon: <CalendarOutlined />,
-      label: "Schedule for student",
-      href: "/admin_test/studentSchedule",
-    },
-    {
-      key: "schedule for teacher",
-      icon: <CalendarOutlined />,
-      label: "Schedule for teacher",
-      href: "/admin_test/teacherSchedule",
-    },
-    {
-      key: "attendance",
-      icon: <Notebook />,
-      label: "Attendance",
-      href: "/admin_test/attendance",
+      label: "Teachers",
+      href: "/admin/teachers",
     },
     {
       key: "groups",
       icon: <Group />,
       label: "Groups",
-      href: "/admin_test/groups",
+      href: "/admin/groups",
     },
     {
-      key: "profile",
-      icon: <User />,
-      label: "Profile",
-      href: "/admin_test/profile",
+      key: "modules",
+      icon: <BookOutlined />,
+      label: "Modules",
+      href: "/admin/modules",
+    },
+    {
+      key: "payments",
+      icon: <CreditCardOutlined />,
+      label: "Payments",
+      href: "/admin/payments",
     },
   ];
 
