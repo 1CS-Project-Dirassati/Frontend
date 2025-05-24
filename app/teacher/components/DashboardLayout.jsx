@@ -74,17 +74,17 @@ const DashboardLayout = ({ children }) => {
 
   const menuItems = [
     { key: "home", icon: <HomeOutlined />, label: "Home", href: "/teacher" },
-   
+
     {
-      key: "teachers unapproved",
+      key: "chat-parents",
       icon: <TeamOutlined />,
-      label: "chat with parents",
+      label: "Chat with Parents",
       href: "/teacher/unapproved",
     },
     {
-      key: "teachers unapproved",
+      key: "chat-students",
       icon: <TeamOutlined />,
-      label: "chat with students",
+      label: "Chat with Students",
       href: "/teacher/unapproved",
     },
     {
@@ -93,14 +93,12 @@ const DashboardLayout = ({ children }) => {
       label: "Sons schedule",
       href: "/teacher/schedule",
     },
- ,
     {
       key: "attendance",
       icon: <Notebook />,
-      label: "add marks",
+      label: "Add Marks",
       href: "/teacher/attendance",
     },
- 
     {
       key: "profile",
       icon: <User />,
