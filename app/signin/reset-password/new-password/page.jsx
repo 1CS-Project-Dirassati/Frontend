@@ -64,8 +64,9 @@ export default function ResetPassword() {
        }),
        body: JSON.stringify({
          password: password,
-         phoneNumber: `${dataState.email}`,
+         email: `${dataState.email}`,
          otp: dataState.otp,
+         role:"parent",
  
        }),
      })

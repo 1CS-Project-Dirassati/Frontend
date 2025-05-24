@@ -3,8 +3,15 @@
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { XIcon } from "lucide-react"
+import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js"
+import { loadStripe } from "@stripe/stripe-js";
+import { useSelector } from "react-redux";
+
+import apiCall from "../utils/apiCall"
 
 import { cn } from "@/lib/utils"
+
+const stripePromise = loadStripe("pk_test_51P2fsNCTNOiewRNODTiUb0TDBIGC1NaXNg2Go8IU72GTtnk63efHLef8gAm0eveEaHOlIUaElwYClMtBCkPTuQ0000u0knkOh8");
 
 function Dialog({
   ...props
@@ -50,6 +57,33 @@ function DialogContent({
   children,
   ...props
 }) {
+  const token = useSelector((state) => state.auth.accessToken);
+
+  const handlePayment = async () => {
+    if (!token) {
+      alert("You are not authenticated. Please log in.");
+      return;
+    }
+
+    try {
+      const response = await apiCall(
+        "/payment/create-checkout-session",
+        "POST",
+        { fee_id: 1 }, // Replace with the actual fee_id
+        token
+      );
+
+      if (response.sessionId) {
+        window.location.href = `https://checkout.stripe.com/pay/${response.sessionId}`;
+      } else {
+        alert("Failed to create checkout session.");
+      }
+    } catch (error) {
+      console.error("Error creating checkout session:", error);
+      alert("An error occurred while creating the checkout session. Please try again.");
+    }
+  };
+
   return (
     (<DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
@@ -60,7 +94,27 @@ function DialogContent({
           className
         )}
         {...props}>
-        {children}
+        <div className="space-y-4">
+          {/* Montant Section */}
+          <div>
+            <label className="text-sm text-slate-600 mb-1 block">
+              Montant
+            </label>
+            <div className="bg-gray-100 p-3 rounded-md text-sm text-gray-700">
+              50.00 USD
+            </div>
+          </div>
+
+          {/* Pay Button */}
+          <div className="mt-4">
+            <button
+              className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+              type="button"
+              onClick={handlePayment}>
+              Paye Maintenant
+            </button>
+          </div>
+        </div>
         <DialogPrimitive.Close
           className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
           <XIcon />

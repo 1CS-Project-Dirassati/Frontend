@@ -30,7 +30,7 @@ export default function RootLayout({ children }) {
       >
         <ReduxProvider>
           <ThemeProvider>
-            <TokenRefresher/>
+         <TokenRefresher/>
             {children}</ThemeProvider> {/* Wrap with ThemeProvider */}
           </ReduxProvider>
       </body>

@@ -373,7 +373,7 @@ export default function Home() {
     setTimeRange(value);
     router.push(`/admin_test?timeRange=${value}`);
   };
-  if (permision === "teacher") {
+  //if (permision === "teacher") {
    
   
   
@@ -602,9 +602,9 @@ export default function Home() {
       </SidePanel> */}
     </div>
   );
-}
+/*}
 
 else{
   router.push("/signin")
-}
+}*/
 }

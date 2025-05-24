@@ -39,7 +39,8 @@ export default function ResetPassword(){
           'Accept': 'application/json'
         }),
         body: JSON.stringify({
-          phoneNumber: email, 
+          email: email, 
+          role:"parent",
         }),
       });
   

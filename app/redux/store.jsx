@@ -3,6 +3,7 @@ import { persistReducer, persistStore } from "redux-persist";
 import storage from "redux-persist/lib/storage"; // defaults to localStorage for web
 import resetPasswordReducer from "./features/auth/resetPasswordSlice"; 
 import authReducer from "./features/auth/authSlice";
+import parentinfoReducer from "./features/parentinfoSlice";
 
 // Persist config for auth reducer
 const authPersistConfig = {
@@ -16,9 +17,17 @@ const resetPasswordPersistConfig = {
   whitelist: ['isVerifiedOTP', 'email', 'otp'] // persist these fields
 };
 
+// Persist config for parentinfo reducer
+const parentinfoPersistConfig = {
+  key: 'parentinfo',
+  storage,
+  whitelist: ['parentProfile'] // only parentProfile will be persisted
+};
+
 const rootReducer = {
   resetPassword: persistReducer(resetPasswordPersistConfig, resetPasswordReducer),
-    auth: persistReducer(authPersistConfig, authReducer),
+  auth: persistReducer(authPersistConfig, authReducer),
+  parentinfo: persistReducer(parentinfoPersistConfig, parentinfoReducer),
 };
 
 export const store = configureStore({

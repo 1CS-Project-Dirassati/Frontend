@@ -1,6 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import apiCall from "@/components/utils/apiCall";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button as ShadcnButton } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -9,7 +12,43 @@ import { parentsData } from "../../data/parentsData";
 export default function ParentProfile({ params }) {
   const { id } = params;
   const router = useRouter();
-  const parent = parentsData.find((p) => p.key === id);
+  const parentFromData = parentsData.find((p) => p.key === id);
+
+  const [profileData, setProfileData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  
+  
+
+  const auth = useSelector((state) => state.auth);
+  const authToken = useSelector((state) => state.auth.accessToken);
+  const parent = useSelector((state)=>state.parentinfo.parentProfile) 
+  
+
+
+  
+
+  if (!parent) {
+    return (
+      <div className="p-4 min-h-screen flex items-center justify-center bg-background">
+        <Card className="bg-background border-border shadow-lg rounded-lg">
+          <CardHeader>
+            <CardTitle className="text-text text-2xl">
+              Error Loading Profile
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            
+            <ShadcnButton
+              onClick={() => router.push("/admin_test/parents")}
+              className="bg-secondary hover:bg-accent text-background transition-all duration-300"
+            >
+              Back to Parents
+            </ShadcnButton>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!parent) {
     return (
@@ -28,6 +67,20 @@ export default function ParentProfile({ params }) {
               Back to Parents
             </ShadcnButton>
           </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!parent) {
+    return (
+      <div className="p-4 min-h-screen flex items-center justify-center bg-background">
+        <Card className="bg-background border-border shadow-lg rounded-lg">
+          <CardHeader>
+            <CardTitle className="text-text text-2xl">
+              Loading Parent Profile...
+            </CardTitle>
+          </CardHeader>
         </Card>
       </div>
     );
@@ -62,16 +115,16 @@ export default function ParentProfile({ params }) {
             <Avatar className="absolute top-16 left-6 w-24 h-24 border-4 border-background shadow-lg transform transition-all duration-300 hover:scale-105">
               <AvatarImage
                 src="https://images.unsplash.com/photo-1494790108377-be9c29b29330"
-                alt={parent.name}
+                alt={parentFromData.name}
               />
               <AvatarFallback className="bg-secondary text-background text-2xl">
-                {parent.name.charAt(0)}
+                {parentFromData.name.charAt(0)}
               </AvatarFallback>
             </Avatar>
           </div>
           <CardHeader className="pt-16">
             <CardTitle className="text-2xl font-semibold text-text">
-              {parent.name}
+              {parent.first_name} {parent.last_name}
             </CardTitle>
           </CardHeader>
           <CardContent className={layoutClass}>
@@ -86,7 +139,7 @@ export default function ParentProfile({ params }) {
                   className="text-text mt-1 font-bold"
                   style={{ color: accentColor }}
                 >
-                  {parent.phone}
+                  {parent.phone_number}
                 </p>
               </div>
             </div>

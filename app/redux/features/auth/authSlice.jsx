@@ -5,13 +5,14 @@ const initialState = {
   isAuthenticated:false,
   role:null
 }
+
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
     setToken: (state, action) => {
       state.accessToken= action.payload.accessToken;
-      state.refreshToken=action.payload.refreshToken
+      state.refreshToken=action.payload.refreshToken;
       state.role=action.payload.role
       state.isAuthenticated = true;
     },

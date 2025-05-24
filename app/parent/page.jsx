@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState ,useEffect} from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useSelector,useDispatch } from "react-redux";
+import { setParentProfile } from "../redux/features/parentinfoSlice";
 import {
   Card as AntCard,
   Col,
@@ -22,6 +24,7 @@ import {
 import dynamic from "next/dynamic";
 import { Card as ShadcnCard } from "@/components/ui/card";
 import styled from "styled-components";
+import apiCall from "@/components/utils/apiCall";
 
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
@@ -121,37 +124,77 @@ export default function Home() {
   const [timeRange, setTimeRange] = useState(
     searchParams.get("timeRange") || "monthly"
   );
+  const [statsData, setStatsData] = useState(null);
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [statsError, setStatsError] = useState(null);
+  const dispatch = useDispatch();
+  
+  
+  const authToken = useSelector((state) => state.auth.accessToken);
+   const parentinfo = useSelector((state)=>state.parentinfo.parentProfile) 
+   if (authToken ===null){
+    router.push("/signin");
+   }
+   else{
+  useEffect(() => {
+    
+    const fetchStats = async () => {
+      setLoadingStats(true);
+      setStatsError(null);
+      if (!parentinfo){
 
-  const statsData = [
-    {
-      name: "Total Students",
-      value: 1200,
-      change: "+5%",
-      color: "#1890ff",
-      info: "Total enrolled students this term",
-    },
-    {
-      name: "Total Parents",
-      value: 800,
-      change: "+3%",
-      color: "#52c41a",
-      info: "Active parent accounts linked",
-    },
-    {
-      name: "Active Sessions",
-      value: 45,
-      change: "-2%",
-      color: "#fa8c16",
-      info: "Classes currently in progress",
-    },
-    {
-      name: "Attendance Rate",
-      value: 92,
-      suffix: "%",
-      color: "#722ed1",
-      info: "Average daily attendance",
-    },
-  ];
+      
+      try {
+      const response = await apiCall("get", "/api/parents/me", null, {
+        token: authToken,
+      });
+
+      dispatch(setParentProfile(response.parent))
+      
+        const stats = [
+          {
+            name: "Total Students",
+            value: res.total_students || 0,
+            change: res.students_change || "",
+            color: "#1890ff",
+            info: "Total enrolled students this term",
+          },
+          {
+            name: "Total Parents",
+            value: res.total_parents || 0,
+            change: res.parents_change || "",
+            color: "#52c41a",
+            info: "Active parent accounts linked",
+          },
+          {
+            name: "Active Sessions",
+            value: res.active_sessions || 0,
+            change: res.sessions_change || "",
+            color: "#fa8c16",
+            info: "Classes currently in progress",
+          },
+          {
+            name: "Attendance Rate",
+            value: res.attendance_rate || 0,
+            suffix: "%",
+            color: "#722ed1",
+            info: "Average daily attendance",
+          },
+        ];
+        setStatsData(stats);
+      } catch (error) {
+      console.log(error.message);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+    }
+    else{
+      return;
+    }
+    };
+    fetchStats();
+  }, [authToken]);
 
   const getAreaSeries = () => {
     switch (timeRange) {
@@ -408,34 +451,44 @@ export default function Home() {
           </Tooltip>
         </StyledSubHeader>
         <Row gutter={[16, 16]}>
-          {statsData.map((stat) => (
-            <Col xs={24} sm={12} md={6} key={stat.name}>
-              <AntCard
-                hoverable
-                style={{ borderRadius: 8, border: "1px solid #e8e8e8" }}
-              >
-                <Statistic
-                  title={
-                    <span>
-                      {stat.name}{" "}
-                      <Tooltip title={stat.info}>
-                        <InfoCircleOutlined
-                          style={{ fontSize: "12px", color: "#888" }}
-                        />
-                      </Tooltip>
-                    </span>
-                  }
-                  value={stat.value}
-                  suffix={stat.suffix || stat.change}
-                  valueStyle={{
-                    color: stat.color,
-                    fontSize: "24px",
-                    fontWeight: 500,
-                  }}
-                />
-              </AntCard>
+          {loadingStats ? (
+            <Col span={24} style={{ textAlign: "center" }}>
+              <span>Loading metrics...</span>
             </Col>
-          ))}
+          ) : statsError ? (
+            <Col span={24} style={{ textAlign: "center", color: "red" }}>
+              {statsError}
+            </Col>
+          ) : (
+            statsData && statsData.map((stat) => (
+              <Col xs={24} sm={12} md={6} key={stat.name}>
+                <AntCard
+                  hoverable
+                  style={{ borderRadius: 8, border: "1px solid #e8e8e8" }}
+                >
+                  <Statistic
+                    title={
+                      <span>
+                        {stat.name}{" "}
+                        <Tooltip title={stat.info}>
+                          <InfoCircleOutlined
+                            style={{ fontSize: "12px", color: "#888" }}
+                          />
+                        </Tooltip>
+                      </span>
+                    }
+                    value={stat.value}
+                    suffix={stat.suffix || stat.change}
+                    valueStyle={{
+                      color: stat.color,
+                      fontSize: "24px",
+                      fontWeight: 500,
+                    }}
+                  />
+                </AntCard>
+              </Col>
+            ))
+          )}
         </Row>
       </StyledSection>
 
@@ -597,4 +650,5 @@ export default function Home() {
       </SidePanel> */}
     </div>
   );
+}
 }
