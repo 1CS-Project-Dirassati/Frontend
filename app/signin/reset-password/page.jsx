@@ -18,6 +18,7 @@ export default function ResetPassword(){
   const [disabled, setDisabled] = useState(true);
   const dispatch = useDispatch();
   const token = useSelector((state) => state.auth.token);
+  const role = new URLSearchParams(window.location.search).get("role") || "parent";
 
   const handleChangeEmail = (value) => {
 
@@ -39,8 +40,8 @@ export default function ResetPassword(){
           'Accept': 'application/json'
         }),
         body: JSON.stringify({
-          email: email, 
-          role:"parent",
+          email: email,
+          role: role,
         }),
       });
   

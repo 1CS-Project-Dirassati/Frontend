@@ -1,6 +1,6 @@
 "use client";
 import style from "../style.module.css"
-import  AntButton_primary   from "@/components/ui/antButton_primary";
+import  AntButton_primary   from "@/components/ui/antButton_primary ";
 import  Input  from "@/components/ui/antInput";
 import Input_Password  from "@/components/ui/input_password";
 import { useState,useEffect } from "react";
@@ -10,6 +10,7 @@ import { setToken } from "../../redux/features/auth/authSlice";
 import {persistor} from "../../redux/store";
 import apiCall from "../../../components/utils/apiCall";
 export default function SignInPage() {
+  
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,11 +27,13 @@ export default function SignInPage() {
     try {
       const dataUser = { email:email, password:password,role:"admin" };
       const result = await apiCall('POST', '/auth/login', dataUser);    
-      const accessToken = result.access_token;
-      const refreshToken = result.refresh_token;
-    if (result === true){ 
-      dispatch(setToken({accessToken:accessToken,refreshToken:refreshToken,role:"admin"})); 
-      router.push("/admin_test")
+      const access_Token = result.access_token;
+      const refresh_Token = result.refresh_token;
+    if (result.status === true){ 
+      const Rolle="admin";
+      dispatch(setToken({accessToken:access_Token,refreshToken:refresh_Token,role:Rolle})); 
+      router.push("/admin")
+      
     } else {
       setStatus("Invalid email or password");
     }
@@ -45,7 +48,7 @@ export default function SignInPage() {
     setPassword(newValue);
   };
   if (token){
-    router.push("/home")
+    router.push("/admin")
   }
   else {
 
@@ -65,9 +68,11 @@ export default function SignInPage() {
           <p className={style.text}>Password</p>
           <Input_Password  Status={status} inputValue={password} onInputChange={handleChangePassword}></Input_Password>
       </div>
-      <p className={style.custom_Text_forgotPassword} onClick={()=>router.push("/signin/reset-password")}>
-           <span className="text-red-500 cursor-pointer underline" style={{display:"flex",justifyContent:"end"}}>Forgot Password?</span>
-        </p>
+      <p className={style.custom_Text_forgotPassword} onClick={() => router.push(`/signin/reset-password?role=parent`)}>
+        <span className="text-red-500 cursor-pointer underline" style={{ display: "flex", justifyContent: "end" }}>
+          Forgot Password?
+        </span>
+      </p>
       <AntButton_primary text={"Sign Up"} onClick={signupClickHandler}></AntButton_primary>
 
     </div>

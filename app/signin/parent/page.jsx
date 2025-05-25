@@ -68,9 +68,11 @@ export default function SignInPage() {
           <p className={style.text}>Password</p>
           <Input_Password  Status={status} inputValue={password} onInputChange={handleChangePassword}></Input_Password>
       </div>
-      <p className={style.custom_Text_forgotPassword} onClick={()=>router.push("/signin/reset-password")}>
-           <span className="text-red-500 cursor-pointer underline" style={{display:"flex",justifyContent:"end"}}>Forgot Password?</span>
-        </p>
+      <p className={style.custom_Text_forgotPassword} onClick={() => router.push(`/signin/reset-password?role=parent`)}>
+        <span className="text-red-500 cursor-pointer underline" style={{ display: "flex", justifyContent: "end" }}>
+          Forgot Password?
+        </span>
+      </p>
       <AntButton_primary text={"Sign Up"} onClick={signupClickHandler}></AntButton_primary>
 
     </div>
