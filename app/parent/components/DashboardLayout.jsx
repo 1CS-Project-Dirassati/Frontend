@@ -106,6 +106,12 @@ const DashboardLayout = ({ children }) => {
       label: "Profile",
       href: "/parent/parentProfile/1",
     },
+    {
+      key: "addchild",
+      icon: <UserOutlined />, // You can replace this with a more appropriate icon
+      label: "Add Child",
+      href: "/parent/addchild",
+    },
   ];
 
   const userMenuItems = [

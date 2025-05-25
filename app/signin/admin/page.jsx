@@ -1,6 +1,6 @@
 "use client";
 import style from "../style.module.css"
-import  AntButton_primary   from "@/components/ui/antButton_primary ";
+import  AntButton_primary   from "@/components/ui/antButton_primary";
 import  Input  from "@/components/ui/antInput";
 import Input_Password  from "@/components/ui/input_password";
 import { useState,useEffect } from "react";
