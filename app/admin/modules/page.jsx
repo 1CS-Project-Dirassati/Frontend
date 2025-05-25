@@ -1,38 +1,95 @@
-// filepath: app/admin/modules/page.jsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Table, Form, Input, Select, Button, message, Card } from "antd";
-import { getLevels } from "../../admin_test/data/studentsData";
-// import apiCall from "../../../components/utils/apiCall"; // Uncomment for real API
+import apiCall from "../../../components/utils/apiCall";
+import { useSelector } from "react-redux";
 
 export default function Modules() {
   const [form] = Form.useForm();
-  const levels = getLevels();
-  const [modules, setModules] = useState([
-    { id: 1, name: "Mathematics", level_id: 1 },
-    { id: 2, name: "Physics", level_id: 10 },
-  ]);
+  const [levels, setLevels] = useState([]);
+  const [modules, setModules] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
 
-  const onFinish = (values) => {
-    const newModule = {
-      id: Date.now(),
-      name: values.name,
-      level_id: values.level_id,
-    };
-    setModules((prev) => [...prev, newModule]);
-    message.success("Module created");
-    form.resetFields();
-    // apiCall('post', '/api/modules', newModule)
-    //   .then(() => message.success('Module saved'))
-    //   .catch(() => message.error('Save failed'));
+  const token = useSelector((state) => state.auth.accessToken);
+
+  useEffect(() => {
+    fetchLevels();
+    fetchModules(pagination.current, pagination.pageSize);
+  }, []);
+
+  const fetchLevels = async () => {
+    try {
+      const levelsResponse = await apiCall("get", `/api/levels`, null, {
+        token,
+      });
+      setLevels(levelsResponse);
+    } catch (error) {
+      message.error("Failed to fetch levels");
+    }
   };
 
-  const handleDelete = (id) => {
-    setModules((prev) => prev.filter((m) => m.id !== id));
-    message.success("Module removed");
-    // apiCall('delete', `/api/modules/${id}`)
-    //   .then(() => setModules(getFromApi()))
+  const fetchModules = async (page, pageSize) => {
+    try {
+      setLoading(true);
+      const response = await apiCall(
+        "get",
+        `/api/modules?page=${page}&per_page=${pageSize}`,
+        null,
+        { token }
+      );
+
+      // If API returns shape: { data: [...], total: number }
+      setModules(response.data);
+      setPagination((prev) => ({
+        ...prev,
+        current: page,
+        pageSize,
+        total: response.total,
+      }));
+    } catch (error) {
+      message.error("Failed to fetch modules");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTableChange = (pagination) => {
+    fetchModules(pagination.current, pagination.pageSize);
+  };
+
+  const onFinish = async (values) => {
+    try {
+      const newModule = {
+        name: values.name,
+        level_id: values.level_id,
+      };
+      await apiCall("post", "/api/modules", newModule, { token });
+      message.success("Module created");
+
+      // Re-fetch current page
+      fetchModules(pagination.current, pagination.pageSize);
+      form.resetFields();
+    } catch (error) {
+      message.error("Failed to create module");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await apiCall("delete", `/api/modules/${id}`, null, { token });
+      message.success("Module removed");
+
+      // Re-fetch current page
+      fetchModules(pagination.current, pagination.pageSize);
+    } catch (error) {
+      message.error("Failed to delete module");
+    }
   };
 
   const columns = [
@@ -83,11 +140,18 @@ export default function Modules() {
             </Button>
           </Form.Item>
         </Form>
+
         <Table
           columns={columns}
           dataSource={modules}
           rowKey="id"
-          pagination={{ pageSize: 10 }}
+          loading={loading}
+          pagination={{
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+          }}
+          onChange={handleTableChange}
           bordered
         />
       </Card>

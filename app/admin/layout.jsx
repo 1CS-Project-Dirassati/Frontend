@@ -1,4 +1,4 @@
-import DashboardLayout from "../admin_test/components/DashboardLayout";
+import DashboardLayout from "./components/DashboardLayout";
 
 
 export default async function AdminLayout({ children, params }) {

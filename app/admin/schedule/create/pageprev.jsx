@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -25,7 +24,6 @@ import {
 import { CalendarIcon, Plus, Save, Trash2, Copy, Wand2 } from "lucide-react";
 import { DatePicker, Table, Space } from "antd";
 import moment from "moment";
-import { useSelector } from "react-redux";
 
 // Static levels
 const staticLevels = [
@@ -38,21 +36,25 @@ const staticLevels = [
 const staticModules = [
   // 1st Year
   { id: "m1", name: "Mathematics I", level_id: "1" },
+
 ];
 
 // Static teachers
 const staticTeachers = [
   { id: "t1", first_name: "John", last_name: "Doe" },
+
 ];
 
 // Static rooms
 const staticRooms = [
   { id: "r1", name: "Room A101" },
+
 ];
 
 // Static groups per level
 const staticGroups = [
   { id: "g1", name: "Group A", level_id: "1" },
+
 ];
 
 // Static availability data
@@ -66,6 +68,7 @@ const staticAvailability = {
       Friday: { ts1: true, ts2: true, ts3: false, ts4: true, ts5: true },
       Saturday: { ts1: true, ts2: false, ts3: true, ts4: false, ts5: true },
     },
+    
   },
   rooms: {
     r1: {
@@ -76,6 +79,7 @@ const staticAvailability = {
       Friday: { ts1: true, ts2: true, ts3: false, ts4: true, ts5: true },
       Saturday: { ts1: true, ts2: false, ts3: true, ts4: false, ts5: true },
     },
+
   },
 };
 
@@ -140,7 +144,7 @@ const CreateAdminSchedulePage = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [trimesterOption, setTrimesterOption] = useState("");
   const [trimesterName, setTrimesterName] = useState("");
-  const [dateRange, setDateRange] = useState(null);
+  const [dateRange, setDateRange] = useState(null); // Initialize as null
   const [groupName, setGroupName] = useState("");
   const [selectedLevelId, setSelectedLevelId] = useState(null);
   const [trimesterData, setTrimesterData] = useState(null);
@@ -153,7 +157,6 @@ const CreateAdminSchedulePage = () => {
   const [teachers, setTeachers] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [availability, setAvailability] = useState({});
-  const [availableTimeSlots, setAvailableTimeSlots] = useState({});
 
   const days = [
     "Monday",
@@ -173,26 +176,32 @@ const CreateAdminSchedulePage = () => {
 
   // Initialize static data
   useEffect(() => {
+    // Set static teachers
     setTeachers(staticTeachers);
+    // Set static rooms
     setRooms(staticRooms);
+    // Set static availability
     setAvailability(staticAvailability);
   }, []);
 
-  // Update modules, groups, and schedule when level changes
+  // Update modules and groups when level changes
   useEffect(() => {
     if (selectedLevelId) {
+      // Filter static modules by level
       const levelModules = staticModules.filter(
         (module) => module.level_id === selectedLevelId
       );
       setAvailableModules(levelModules);
       setSelectedModules([]);
 
+      // Filter static groups by level
       const levelGroups = staticGroups.filter(
         (group) => group.level_id === selectedLevelId
       );
       setGroups(levelGroups);
       setSelectedGroupId(null);
 
+      // Initialize schedule
       setWeeklySchedule(
         days.reduce(
           (acc, day) => ({
@@ -208,40 +217,8 @@ const CreateAdminSchedulePage = () => {
           {}
         )
       );
-      setAvailableTimeSlots({});
     }
   }, [selectedLevelId]);
-
-  // Fetch available time slots when group is selected
-  useEffect(() => {
-    if (selectedGroupId && currentStep >= 3) {
-      const fetchAvailableTimeSlots = async () => {
-        try {
-          const token = useSelector((state) => state.auth.accessToken);
-          const response = await fetch(
-            `/api/sessions/group/${selectedGroupId.replace("g", "")}/time-slots`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          ).then((res) => res.json());
-
-          if (response.status) {
-            setAvailableTimeSlots(response.time_slots);
-            toast.success("Available time slots fetched successfully.");
-          } else {
-            toast.error(response.message || "Failed to fetch available time slots.");
-          }
-        } catch (error) {
-          console.error("Error fetching time slots:", error);
-          toast.error("Error fetching time slots: " + error.message);
-        }
-      };
-
-      fetchAvailableTimeSlots();
-    }
-  }, [selectedGroupId, currentStep]);
 
   const handleTrimesterChange = (value) => {
     setTrimesterOption(value);
@@ -252,6 +229,7 @@ const CreateAdminSchedulePage = () => {
       const selected = defaultTrimesters.find((t) => t.name === value);
       if (selected) {
         setTrimesterName(selected.name);
+        // Store dates as strings
         setDateRange([selected.startDate, selected.endDate]);
       }
     }
@@ -259,6 +237,7 @@ const CreateAdminSchedulePage = () => {
 
   const handleDateRangeChange = (dates) => {
     if (dates && dates.length === 2) {
+      // Store dates as strings in YYYY-MM-DD format
       setDateRange([
         dates[0].format("YYYY-MM-DD"),
         dates[1].format("YYYY-MM-DD"),
@@ -285,22 +264,7 @@ const CreateAdminSchedulePage = () => {
       return;
     }
 
-    const timeSlotMapping = {
-      ts1: "h8-10",
-      ts2: "h10-12",
-      ts3: "h12-14",
-      ts4: "h14-16",
-      ts5: "h16-18",
-    };
-    const dayMapping = {
-      Monday: "d1",
-      Tuesday: "d2",
-      Wednesday: "d3",
-      Thursday: "d4",
-      Friday: "d5",
-      Saturday: "d6",
-    };
-
+    // Initialize empty schedule
     const newSchedule = days.reduce(
       (acc, day) => ({
         ...acc,
@@ -315,6 +279,7 @@ const CreateAdminSchedulePage = () => {
       {}
     );
 
+    // Track used teachers and rooms per time slot to avoid conflicts
     const usedResources = days.reduce(
       (acc, day) => ({
         ...acc,
@@ -329,35 +294,31 @@ const CreateAdminSchedulePage = () => {
       {}
     );
 
+    // Ensure at least one slot per day is filled
     days.forEach((day) => {
       let slotsFilled = 0;
       timeSlots.forEach((slot) => {
-        const backendTimeSlot = `${dayMapping[day]}${timeSlotMapping[slot.id]}`;
-        const availableSlotInfo = availableTimeSlots[backendTimeSlot] || [];
-        if (!availableSlotInfo.length || (Math.random() > 0.6 && slotsFilled > 0))
-          return;
+        // Skip if already filled or randomly skip some slots for variety
+        if (Math.random() > 0.6 && slotsFilled > 0) return;
 
+        // Get available modules (randomly select from selectedModules)
         const moduleId =
           selectedModules[Math.floor(Math.random() * selectedModules.length)];
         if (!moduleId) return;
 
-        const availableTeachers = availableSlotInfo
-          .filter(
-            (info) =>
-              info.module_name ===
-              staticModules.find((m) => m.id === moduleId)?.name
-          )
-          .map((info) =>
-            teachers.find(
-              (t) => `${t.first_name} ${t.last_name}` === info.teacher_name
-            )
-          )
-          .filter((t) => t && !usedResources[day][slot.id].teachers.has(t.id));
+        // Get available teachers for this slot
+        const availableTeachers = teachers.filter(
+          (teacher) =>
+            availability.teachers[teacher.id]?.[day]?.[slot.id] &&
+            !usedResources[day][slot.id].teachers.has(teacher.id)
+        );
         if (!availableTeachers.length) return;
         const teacherId =
-          availableTeachers[Math.floor(Math.random() * availableTeachers.length)]
-            .id;
+          availableTeachers[
+            Math.floor(Math.random() * availableTeachers.length)
+          ].id;
 
+        // Get available rooms for this slot
         const availableRooms = rooms.filter(
           (room) =>
             availability.rooms[room.id]?.[day]?.[slot.id] &&
@@ -367,12 +328,14 @@ const CreateAdminSchedulePage = () => {
         const roomId =
           availableRooms[Math.floor(Math.random() * availableRooms.length)].id;
 
+        // Assign to schedule
         newSchedule[day][slot.id] = {
           moduleId,
           teacherId,
           roomId,
         };
 
+        // Mark resources as used
         usedResources[day][slot.id].teachers.add(teacherId);
         usedResources[day][slot.id].rooms.add(roomId);
         slotsFilled++;
@@ -404,7 +367,7 @@ const CreateAdminSchedulePage = () => {
           toast.error("Please select a valid date range.");
           return;
         }
-
+        // Mock trimester creation
         const trimesterPayload = {
           name: trimesterName,
           level_id: parseInt(selectedLevelId),
@@ -414,49 +377,21 @@ const CreateAdminSchedulePage = () => {
               (1000 * 60 * 60 * 24 * 7)
           ),
         };
+        console.log("Mock trimester payload:", trimesterPayload);
 
-        try {
-          const token = localStorage.getItem("token");
-          if (!token) {
-            const mockResponse = {
-              status: true,
-              semester: { id: `s${Date.now()}` },
-            };
-            setTrimesterData({
-              id: mockResponse.semester.id,
-              name: trimesterName,
-              startDate: dateRange[0],
-              endDate: dateRange[1],
-            });
-            toast.success("Trimester created successfully (mocked).");
-          } else {
-            const response = await fetch("/api/semesters", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify(trimesterPayload),
-            }).then((res) => res.json());
+        // Simulate successful response
+        const mockResponse = {
+          status: true,
+          semester: { id: `s${Date.now()}` },
+        };
 
-            if (response.status) {
-              setTrimesterData({
-                id: response.semester.id,
-                name: trimesterName,
-                startDate: dateRange[0],
-                endDate: dateRange[1],
-              });
-              toast.success("Trimester created successfully.");
-            } else {
-              toast.error(response.message || "Failed to create trimester.");
-              return;
-            }
-          }
-        } catch (error) {
-          console.error("Error creating trimester:", error);
-          toast.error("Error creating trimester: " + error.message);
-          return;
-        }
+        setTrimesterData({
+          id: mockResponse.semester.id,
+          name: trimesterName,
+          startDate: dateRange[0],
+          endDate: dateRange[1],
+        });
+        toast.success("Trimester created successfully (mocked).");
       }
       if (currentStep === 2 && selectedModules.length === 0) {
         toast.error("Please select at least one module.");
@@ -483,6 +418,7 @@ const CreateAdminSchedulePage = () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
+        // Mock group creation for testing
         const newGroup = {
           id: `g${Date.now()}`,
           name: groupName,
@@ -526,50 +462,16 @@ const CreateAdminSchedulePage = () => {
   };
 
   const handleScheduleCellChange = (day, timeSlotId, field, value) => {
-    const timeSlotMapping = {
-      ts1: "h8-10",
-      ts2: "h10-12",
-      ts3: "h12-14",
-      ts4: "h14-16",
-      ts5: "h16-18",
-    };
-    const dayMapping = {
-      Monday: "d1",
-      Tuesday: "d2",
-      Wednesday: "d3",
-      Thursday: "d4",
-      Friday: "d5",
-      Saturday: "d6",
-    };
-    const backendTimeSlot = `${dayMapping[day]}${timeSlotMapping[timeSlotId]}`;
-    const availableSlotInfo = availableTimeSlots[backendTimeSlot] || [];
-
+    // Check availability
     if (field === "teacherId" && value) {
-      const teacher = teachers.find((t) => t.id === value);
-      const isTeacherAvailable = availableSlotInfo.some(
-        (info) => `${teacher.first_name} ${teacher.last_name}` === info.teacher_name
-      );
-      if (!isTeacherAvailable) {
+      const isAvailable =
+        availability.teachers[value]?.[day]?.[timeSlotId] ?? true;
+      if (!isAvailable) {
         toast.warning(
           `Teacher is not available on ${day} at ${
             timeSlots.find((ts) => ts.id === timeSlotId).label
           }.`
         );
-        return;
-      }
-    }
-    if (field === "moduleId" && value) {
-      const module = availableModules.find((m) => m.id === value);
-      const isModuleAvailable = availableSlotInfo.some(
-        (info) => info.module_name === module.name
-      );
-      if (!isModuleAvailable) {
-        toast.warning(
-          `Module is not available on ${day} at ${
-            timeSlots.find((ts) => ts.id === timeSlotId).label
-          }.`
-        );
-        return;
       }
     }
     if (field === "roomId" && value) {
@@ -581,10 +483,8 @@ const CreateAdminSchedulePage = () => {
             timeSlots.find((ts) => ts.id === timeSlotId).label
           }.`
         );
-        return;
       }
     }
-
     setWeeklySchedule((prev) => ({
       ...prev,
       [day]: {
@@ -641,72 +541,41 @@ const CreateAdminSchedulePage = () => {
       return;
     }
 
-    const timeSlotMapping = {
-      ts1: "h8-10",
-      ts2: "h10-12",
-      ts3: "h12-14",
-      ts4: "h14-16",
-      ts5: "h16-18",
-    };
-    const dayMapping = {
-      Monday: "d1",
-      Tuesday: "d2",
-      Wednesday: "d3",
-      Thursday: "d4",
-      Friday: "d5",
-      Saturday: "d6",
-    };
-
-    const weeks = Math.ceil(
-      (new Date(trimesterData.endDate) - new Date(trimesterData.startDate)) /
-        (1000 * 60 * 60 * 24 * 7)
-    );
-
-    try {
-      const token = localStorage.getItem("token");
-      const promises = [];
-
-      for (const day of days) {
-        for (const slot of timeSlots) {
-          const session = weeklySchedule[day][slot.id];
-          if (session.moduleId && session.teacherId && session.roomId) {
-            const timeSlot = `${dayMapping[day]}${timeSlotMapping[slot.id]}`;
-            const sessionPayload = {
-              teacher_id: parseInt(session.teacherId.replace("t", "")),
-              module_id: parseInt(session.moduleId.replace("m", "")),
-              group_id: parseInt(selectedGroupId.replace("g", "")),
-              semester_id: parseInt(trimesterData.id.replace("s", "")),
-              salle_id: parseInt(session.roomId.replace("r", "")),
-              time_slot: timeSlot,
-              weeks: weeks,
-            };
-            promises.push(
-              fetch("/api/sessions", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify(sessionPayload),
-              }).then((res) => res.json())
-            );
+    // Check availability conflicts
+    for (const day of days) {
+      for (const slot of timeSlots) {
+        const session = weeklySchedule[day][slot.id];
+        if (session.teacherId && session.roomId) {
+          const teacherAvailable =
+            availability.teachers[session.teacherId]?.[day]?.[slot.id] ?? true;
+          const roomAvailable =
+            availability.rooms[session.roomId]?.[day]?.[slot.id] ?? true;
+          if (!teacherAvailable) {
+            toast.error(`Teacher is not available on ${day} at ${slot.label}.`);
+            return;
+          }
+          if (!roomAvailable) {
+            toast.error(`Room is not available on ${day} at ${slot.label}.`);
+            return;
           }
         }
       }
-
-      const results = await Promise.all(promises);
-      const allSuccessful = results.every((result) => result.status);
-
-      if (allSuccessful) {
-        toast.success("Schedule saved successfully!");
-        router.push("/admin/schedule");
-      } else {
-        toast.error("Failed to save some sessions.");
-      }
-    } catch (error) {
-      console.error("Error saving schedule:", error);
-      toast.error("Error saving schedule: " + error.message);
     }
+
+    const schedulePayload = {
+      levelId: selectedLevelId,
+      trimester: trimesterData,
+      modules: selectedModules.map((id) =>
+        availableModules.find((m) => m.id === id)
+      ),
+      groupId: selectedGroupId,
+      groupName: groups.find((g) => g.id === selectedGroupId)?.name,
+      weeklySchedule,
+    };
+
+    console.log("Schedule to save:", schedulePayload);
+    toast.success("Schedule created successfully!");
+    router.push("/admin/schedule");
   };
 
   // Ant Design Table columns
