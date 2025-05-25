@@ -45,7 +45,8 @@ export default function CompleteChildRegistration() {
   };
 
   return (
-    <div className="p-6 max-w-lg mx-auto">
+    <div style={{alignContent:"center",display:"flex",justifyContent:"center",alignItems:"center",height:"100vh"}}>
+    <div className="p-6 max-w-lg mx-auto" >
       <h1 className="text-2xl font-bold mb-4">Complete Registration</h1>
       {message && (
         <p className={`mb-4 ${message.type === "success" ? "text-green-600" : "text-red-600"}`}>
@@ -65,6 +66,7 @@ export default function CompleteChildRegistration() {
         </div>
         <AntButton_primary text="Submit" onClick={handlePasswordSubmit} />
       </form>
+    </div>
     </div>
   );
 }
