@@ -55,22 +55,19 @@ function DialogOverlay({
 function DialogContent({
   className,
   children,
+  totalUnpaid, // Accept totalUnpaid as a prop
   ...props
 }) {
-  const token = useSelector((state) => state.auth.accessToken);
+  const tokenaccess = useSelector((state) => state.auth.accessToken);
 
   const handlePayment = async () => {
-    if (!token) {
-      alert("You are not authenticated. Please log in.");
-      return;
-    }
-
-    try {
+    
+     try {
       const response = await apiCall(
-        "/payment/create-checkout-session",
         "POST",
-        { fee_id: 1 }, // Replace with the actual fee_id
-        token
+        "/api/payment/create-checkout-session",
+        { fee_id: 0 },
+        { token:tokenaccess} // Replace with the actual fee_id
       );
 
       if (response.sessionId) {
@@ -101,7 +98,7 @@ function DialogContent({
               Montant
             </label>
             <div className="bg-gray-100 p-3 rounded-md text-sm text-gray-700">
-              50.00 USD
+              {(totalUnpaid / 100).toFixed(2)} DZD
             </div>
           </div>
 

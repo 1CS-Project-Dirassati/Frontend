@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { MessageSquare, Send, Loader2 } from "lucide-react";
-
+import { useSelector } from "react-redux";
+import apiCall from "@/components/utils/apiCall";
 export default function ParentTeacherChat({ user }) {
   const [selectedChild, setSelectedChild] = useState("s1"); // Default: Amina
   const [selectedTeacher, setSelectedTeacher] = useState("1"); // Default: Fatima Haddad
@@ -22,6 +23,9 @@ export default function ParentTeacherChat({ user }) {
   const [isTyping, setIsTyping] = useState(false);
   const chatContainerRef = useRef(null);
 
+  // Redux selector for token
+  const token = useSelector((state) => state.auth.accessToken);
+
   // Hardcoded students
   const students = [
     { id: "s1", first_name: "Amina", last_name: "Bouchama" },
@@ -29,13 +33,13 @@ export default function ParentTeacherChat({ user }) {
   ];
 
   // Hardcoded teachers
-  const teachers = [
+  const [teachers, setTeachers] = useState([
     { id: "1", name: "Fatima Haddad", subject: "Arabe" },
     { id: "2", name: "Yassine Saghir", subject: "Mathématiques" },
     { id: "3", name: "Khadija Ben Omar", subject: "Français" },
     { id: "4", name: "Mohamed Kharroubi", subject: "Sciences" },
     { id: "5", name: "Leila Bouziane", subject: "Anglais" },
-  ];
+  ]);
 
   // Initial messages (hardcoded)
   const initialMessages = {
@@ -195,6 +199,29 @@ export default function ParentTeacherChat({ user }) {
     }
     setIsLoading(false);
   }, [user]);
+
+  // Fetch teachers from API
+  useEffect(() => {
+    const fetchTeachers = async () => {
+      try {
+        const response = await apiCall("get", "/api/chats/?page=1&per_page=10", null, {
+          token,
+        });
+        const teacherChats = response.chats.map((chat) => ({
+          id: chat.teacher_id,
+          name: `Teacher ${chat.teacher_id}`, // Replace with actual teacher name if available
+          subject: "Unknown", // Replace with actual subject if available
+        }));
+        setTeachers(teacherChats);
+      } catch (error) {
+        console.error("Error fetching teachers:", error);
+      }
+    };
+
+   
+      fetchTeachers();
+    
+  }, []);
 
   // Send message
   const sendMessage = () => {

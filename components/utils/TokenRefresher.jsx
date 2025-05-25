@@ -1,6 +1,6 @@
 "use client";
 import apiCall from "./apiCall";
-import { setToken } from "@/app/redux/features/auth/authSlice";
+import { updateAccessToken } from "@/app/redux/features/auth/authSlice";
 import { useSelector, useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
@@ -35,7 +35,7 @@ function getTimeUntilTwoMinutesBeforeExpiry(token) {
 
         if (response.status  && response?.access_token) {
           console.log(response.access_token)
-           dispatch(setToken({
+           dispatch(updateAccessToken({
         accessToken: response.access_token,
       // default role if missing
       }));

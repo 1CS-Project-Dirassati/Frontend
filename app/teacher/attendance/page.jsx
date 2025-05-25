@@ -24,9 +24,7 @@ const TeacherAttendancePage = () => {
         { id: "stu3", name: "Charlie" },
       ];
       setStudents(mockData.map((s) => ({ ...s, present: true })));
-      // Example real fetch:
-      // apiCall('get', `/api/sessions/${sessionId}/students?groupId=${groupId}`)
-      //   .then(res => setStudents(res.map(s => ({ ...s, present: true })))))
+      
       setLoading(false);
     }
   }, [sessionId, groupId]);
@@ -42,11 +40,7 @@ const TeacherAttendancePage = () => {
     const attendanceData = { sessionId, groupId, absentees };
     console.log("Submitting attendance:", attendanceData);
     setSubmitting(true);
-    // Real POST request:
-    // apiCall('post', `/api/sessions/${sessionId}/attendance`, attendanceData)
-    //   .then(() => message.success('Attendance saved'))
-    //   .catch(() => message.error('Submit failed'))
-    //   .finally(() => setSubmitting(false));
+   
     setTimeout(() => {
       message.success("Attendance submitted");
       setSubmitting(false);
@@ -68,21 +62,7 @@ const TeacherAttendancePage = () => {
     },
   ];
 
-  // Render
-  if (loading) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <Spin size="large" />
-      </div>
-    );
-  }
+
   return (
     <Card title={`Attendance: ${sessionId}`}>
       <Table

@@ -3,7 +3,7 @@
 import { useState ,useEffect} from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useSelector,useDispatch } from "react-redux";
-import { setParentProfile } from "../redux/features/parentinfoSlice";
+import { setUserProfile } from "../redux/features/userinfoSlice";
 import {
   Card as AntCard,
   Col,
@@ -131,17 +131,14 @@ export default function Home() {
   
   
   const authToken = useSelector((state) => state.auth.accessToken);
-   const parentinfo = useSelector((state)=>state.parentinfo.parentProfile) 
-   if (authToken ===null){
-    router.push("/signin");
-   }
-   else{
+   const parentinfo = useSelector((state)=>state.userinfo.userProfile) 
+
   useEffect(() => {
     
     const fetchStats = async () => {
       setLoadingStats(true);
       setStatsError(null);
-      if (!parentinfo){
+      
 
       
       try {
@@ -149,7 +146,7 @@ export default function Home() {
         token: authToken,
       });
 
-      dispatch(setParentProfile(response.parent))
+         dispatch(setUserProfile(response.parent))
       
         const stats = [
           {
@@ -189,10 +186,8 @@ export default function Home() {
       setLoading(false);
     }
     }
-    else{
-      return;
-    }
-    };
+  
+    
     fetchStats();
   }, [authToken]);
 
@@ -414,6 +409,10 @@ export default function Home() {
     setTimeRange(value);
     router.push(`/admin_test?timeRange=${value}`);
   };
+     if (authToken === null){
+    router.push("/signin");
+   }
+   else{
 
   return (
     <div style={{ padding: "0 16px" }}>

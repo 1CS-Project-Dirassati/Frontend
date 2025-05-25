@@ -21,7 +21,7 @@ export default function ParentProfile({ params }) {
 
   const auth = useSelector((state) => state.auth);
   const authToken = useSelector((state) => state.auth.accessToken);
-  const parent = useSelector((state)=>state.parentinfo.parentProfile) 
+  const parent = useSelector((state)=>state.userinfo.userProfile) 
   
 
 

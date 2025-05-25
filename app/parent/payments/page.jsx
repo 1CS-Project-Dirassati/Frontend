@@ -50,14 +50,19 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
+import apiCall from "@/components/utils/apiCall"; 
+import { useDispatch,useSelector } from "react-redux";// Assuming you have an apiCall utility function
+import clsx from "clsx";
 
 const stripePromise = loadStripe(
   "pk_test_51RS3zNPq3NiYKo7rr5EALXBIEjXBjObVT9AOOGDK1W16BUcabN4Ej9gyUKAplz0lT2cDBJXzTD3d9Xr1oCal8fN300j4MPdKUH"
 );
-
+// Assuming you have a Redux store setup
 function PaymentForm({ onPaymentSuccess }) {
   const stripe = useStripe();
   const elements = useElements();
+ 
+  
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -121,7 +126,44 @@ export default function ParentPayments({ user }) {
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [historiqueTransaction,setHistoriqueTransaction] = useState([]);
+  const[totalPaid, setTotalPaid] = useState(0);
+  const [totalUnpaid, setTotalUnpaid] = useState(0);
+  const [totalOverdue, setTotalOverdue] = useState(0);
+
   const paymentsPerPage = 2;
+ const authToken = useSelector((state) => state.auth.accessToken);
+ console.log(authToken)
+  useEffect(() => {
+    const fetchFees = async () => {
+      try {
+        const response = await apiCall("get", "/api/fees/?parent_id=1&page=1&per_page=1", null, {
+          token: authToken,
+        });
+
+        const fees = response.fees;
+        setHistoriqueTransaction(fees)
+        const totalPaidtmp = response.total
+          .filter((fee) => fee.status === "paid")
+          .reduce((sum, fee) => sum + fee.amount, 0);
+        const totalUnpaidtmp = fees
+          .filter((fee) => fee.status === "unpaid")
+          .reduce((sum, fee) => sum + fee.amount, 0);
+        const totalOverduetmp = fees
+          .filter((fee) => fee.status === "overdue")
+          .reduce((sum, fee) => sum + fee.amount, 0);
+
+        setTotalPaid(totalPaidtmp);
+        setTotalUnpaid(totalUnpaidtmp);
+        setTotalOverdue(totalOverduetmp);
+      } catch (error) {
+        console.error("Error fetching fees:", error);
+      }
+    };
+
+    fetchFees();
+  }, [authToken]);
+
 
   const [paymentForm, setPaymentForm] = useState({
     student_ids: ["s1", "s2"], // Default: Amina and Youssef
@@ -142,82 +184,25 @@ export default function ParentPayments({ user }) {
     email: "contact@dirassati.dz",
   };
 
-  // Initial payments (hardcoded)
-  const initialPayments = [
-    {
-      id: "pi_3N8v2xK9jL2mPqR",
-      amount: 150000, // 1500.00 DZD
-      currency: "DZD",
-      status: "succeeded",
-      created: "2025-05-04T09:00:00Z",
-      payment_method: {
-        type: "card",
-        brand: "visa",
-        last4: "1234",
-      },
-      description: "Frais de scolarité - Amina et Youssef",
-      student_ids: ["s1", "s2"],
-      invoice_id: "in_1N8v2xK9jL2mPqR",
-      frequency: "annual",
-      tax_rate: 20, // 20% VAT
-      notes: "Paiement des frais annuels pour l'année scolaire 2025-2026.",
+  // initialPayments replaced with historiqueTransaction data
+  const initialPayments = historiqueTransaction.map((transaction) => ({
+    id: transaction.id,
+    amount: transaction.amount, // Amount in DZD
+    currency: "DZD",
+    status: transaction.status,
+    created: transaction.due_date,
+    payment_method: {
+      type: "card",
+      brand: "visa",
+      last4: "1234",
     },
-    {
-      id: "pi_4M7u1wJ8iK1nOpQ",
-      amount: 100000, // 1000.00 DZD
-      currency: "DZD",
-      status: "succeeded",
-      created: "2025-05-03T14:30:00Z",
-      payment_method: {
-        type: "card",
-        brand: "mastercard",
-        last4: "5678",
-      },
-      description: "Frais de scolarité - Amina",
-      student_ids: ["s1"],
-      invoice_id: "in_4M7u1wJ8iK1nOpQ",
-      frequency: "trimestrial",
-      tax_rate: 20,
-      notes: "Paiement trimestriel pour le 2ème trimestre 2025.",
-    },
-    {
-      id: "pi_5L6t0vI7hJ0mNpP",
-      amount: 200000, // 2000.00 DZD
-      currency: "DZD",
-      status: "failed",
-      created: "2025-05-02T10:15:00Z",
-      payment_method: {
-        type: "card",
-        brand: "visa",
-        last4: "1234",
-      },
-      description: "Frais de scolarité - Youssef",
-      student_ids: ["s2"],
-      invoice_id: "in_5L6t0vI7hJ0mNpP",
-      frequency: "monthly",
-      tax_rate: 20,
-      notes:
-        "Tentative de paiement mensuel pour mai 2025, échouée en raison d'une carte refusée.",
-    },
-    {
-      id: "pi_6K5s9uH6gI9lMoO",
-      amount: 80000, // 800.00 DZD
-      currency: "DZD",
-      status: "refunded",
-      created: "2025-05-01T16:45:00Z",
-      payment_method: {
-        type: "card",
-        brand: "visa",
-        last4: "1234",
-      },
-      description: "Frais de scolarité - Amina et Youssef",
-      student_ids: ["s1", "s2"],
-      invoice_id: "in_6K5s9uH6gI9lMoO",
-      frequency: "annual",
-      tax_rate: 20,
-      notes: "Remboursé en raison d'un double paiement détecté.",
-    },
-  ];
+    description: transaction.description,
+    student_ids: [], // Removed as per requirement
+    invoice_id: `in_${transaction.id}`,
+    frequency: "annual", // Default value
+    tax_rate: 0, // Default VAT
+    notes: "",
+  }));
 
   // State for payments
   const [payments, setPayments] = useState(initialPayments);
@@ -232,16 +217,7 @@ export default function ParentPayments({ user }) {
       .filter((p) => p.status === "refunded")
       .reduce((sum, p) => sum + p.amount, 0), // 800.00 DZD
   });
-
-  // Check parent access
-  useEffect(() => {
-    if (user && user.role !== "parent") {
-      alert("Vous n’êtes pas autorisé à accéder à cette page");
-      setIsLoading(false);
-      return;
-    }
-    setIsLoading(false);
-  }, [user]);
+ 
 
   // Mock filter/sort function
   const filteredPayments = payments.filter((payment) => {
@@ -339,7 +315,7 @@ export default function ParentPayments({ user }) {
     alert(`Paiement réussi avec la méthode: ${paymentMethod.id}`);
   };
 
-  if (isLoading || (user && user.role !== "parent")) {
+  if (!authToken) {
     return <div className="p-6 text-center text-slate-800">Chargement...</div>;
   }
 
@@ -371,7 +347,7 @@ export default function ParentPayments({ user }) {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            transition={{ duration: 0.5, delay: 0.2}}
           >
             <Card className="bg-white/90 border-slate-300 shadow-xl rounded-xl mb-6">
               <CardHeader>
@@ -385,19 +361,19 @@ export default function ParentPayments({ user }) {
                   <div className="text-center">
                     <p className="text-sm text-slate-600">Total payé</p>
                     <p className="text-2xl font-semibold text-[#0771CB]">
-                      {formatAmount(summary.total_paid, "DZD")}
+                      {formatAmount(totalPaid, "DZD")}
                     </p>
                   </div>
                   <div className="text-center">
                     <p className="text-sm text-slate-600">Total en attente</p>
                     <p className="text-2xl font-semibold text-slate-800">
-                      {formatAmount(summary.total_pending, "DZD")}
+                      {formatAmount(totalUnpaid, "DZD")}
                     </p>
                   </div>
                   <div className="text-center">
                     <p className="text-sm text-slate-600">Total remboursé</p>
                     <p className="text-2xl font-semibold text-slate-800">
-                      {formatAmount(summary.total_refunded, "DZD")}
+                      {formatAmount(totalOverdue, "DZD")}
                     </p>
                   </div>
                 </div>
@@ -657,7 +633,10 @@ export default function ParentPayments({ user }) {
                 open={isPaymentModalOpen}
                 onOpenChange={setIsPaymentModalOpen}
               >
-                <DialogContent className="bg-white rounded-lg shadow-xl max-w-md">
+                <DialogContent
+                  totalUnpaid={totalUnpaid} // Pass totalUnpaid dynamically to the dialog
+                  className="bg-white rounded-lg shadow-xl max-w-md"
+                >
                   <DialogHeader>
                     <DialogTitle className="text-slate-800 flex items-center gap-2">
                       <CreditCard className="w-6 h-6 text-[#0771CB]" />
@@ -698,7 +677,7 @@ export default function ParentPayments({ user }) {
                         type="number"
                         placeholder="1500.00"
                         className="w-full border-slate-300 rounded-lg shadow-sm"
-                        value={paymentForm.amount / 100}
+                        value={totalUnpaid / 100}
                         onChange={(e) =>
                           setPaymentForm({
                             ...paymentForm,

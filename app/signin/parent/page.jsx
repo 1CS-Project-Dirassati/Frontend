@@ -10,6 +10,7 @@ import { setToken } from "../../redux/features/auth/authSlice";
 import {persistor} from "../../redux/store";
 import apiCall from "../../../components/utils/apiCall";
 export default function SignInPage() {
+  
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,10 +27,11 @@ export default function SignInPage() {
     try {
       const dataUser = { email:email, password:password,role:"parent" };
       const result = await apiCall('POST', '/auth/login', dataUser);    
-      const accessToken = result.access_token;
-      const refreshToken = result.refresh_token;
+      const access_Token = result.access_token;
+      const refresh_Token = result.refresh_token;
     if (result.status === true){ 
-      dispatch(setToken({accessToken:accessToken,refreshToken:refreshToken,role:"parent"})); 
+      const Rolle="parent";
+      dispatch(setToken({accessToken:access_Token,refreshToken:refresh_Token,role:Rolle})); 
       router.push("/parent")
       
     } else {
@@ -46,7 +48,7 @@ export default function SignInPage() {
     setPassword(newValue);
   };
   if (token){
-    router.push("/home")
+    router.push("/parent")
   }
   else {
 
