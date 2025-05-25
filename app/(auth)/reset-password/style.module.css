@@ -1,0 +1,105 @@
+.container{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  height: 100vh;
+}
+.Form{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap:30px;
+  width: clamp(200px, 400px, 600px);
+  
+}
+.custom_text {
+  font-family: 'Libre Baskerville', serif;  
+  font-weight: 700;
+  font-size: 48px;
+  line-height: 100%;
+  letter-spacing: 0%;
+}
+.custom_subText{
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 150%;
+  letter-spacing: 0%;
+  color:#718096;
+}
+.custom_Text_forgotPassword{
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 150%;
+  letter-spacing: 0%;
+  color:#718096;
+}
+.text{
+  font-family: Inter;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 20px;
+  letter-spacing: -0.15px;
+  color: #718096;  
+}
+.InputContainer{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.Error_message{
+  font-family: Inter;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 10px;
+  letter-spacing: 0%;
+  vertical-align: middle;
+  color: #E74040;
+  
+}
+/* Default styles */
+
+
+/* When the screen width is at least 407px */
+@media (max-width: 407px) {
+  .Form {
+    width: clamp(100px, 300px, 600px);
+  }
+  .custom_subText{
+  
+   position: absolute;
+   bottom: 15px;
+  }
+  
+}
+.title {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.buttonGroup {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.button {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #fff;
+  background-color: #1890ff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.button:hover {
+  background-color: #40a9ff;
+}

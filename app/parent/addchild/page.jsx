@@ -40,7 +40,7 @@ export default function AddChild() {
     setMessage(null);
 
     try {
-      const response = await apiCall("post", "api/students/add-child", formData, {
+      const response = await apiCall("post", "/api/students/add-child", formData, {
         token:accesstoken,
       });
       setMessage({ type: "success", text: "Child added successfully!" });
