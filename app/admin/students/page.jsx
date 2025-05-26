@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { useSelector } from "react-redux";
 import apiCall from "@/components/utils/apiCall";
+import { useRouter } from "next/navigation";
 
 const translations = {
   fr: {
@@ -79,7 +80,7 @@ export default function ApprovedStudents() {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [editStudent, setEditStudent] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-
+  const router = useRouter();
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -231,7 +232,7 @@ export default function ApprovedStudents() {
             {t.view}
           </span>
         ),
-        onClick: () => openView(record),
+        onClick: () => router.push(`/admin/studentProfile/${record.id}`),
       },
       {
         key: "edit",
