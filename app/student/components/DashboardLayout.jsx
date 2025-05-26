@@ -107,7 +107,7 @@ const DashboardLayout = ({ children }) => {
       key: "logout",
       label: "Logout",
       icon: <LogOut className="w-4 h-4" />,
-      action: () => router.push("/"),
+      action: () => { localStorage.clear(); router.push("/")},
     },
   ];
 

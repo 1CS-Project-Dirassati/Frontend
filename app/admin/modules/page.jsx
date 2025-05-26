@@ -16,7 +16,7 @@ export default function Modules() {
     total: 0,
   });
 
-  const token = useSelector((state) => state.auth.accessToken);
+  const accesstoken = useSelector((state) => state.auth.accessToken);
 
   useEffect(() => {
     fetchLevels();
@@ -26,7 +26,7 @@ export default function Modules() {
   const fetchLevels = async () => {
     try {
       const levelsResponse = await apiCall("get", `/api/levels`, null, {
-        token,
+        token:accesstoken,
       });
       setLevels(levelsResponse);
     } catch (error) {
