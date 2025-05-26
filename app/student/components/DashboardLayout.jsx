@@ -32,9 +32,13 @@ import {
   Notebook,
 } from "lucide-react";
 import { debounce } from "lodash";
+import { useSelector } from "react-redux";
+
 const { Content, Footer } = Layout;
 
 const DashboardLayout = ({ children }) => {
+  const user = useSelector((state)=>state.userinfo.userProfile) 
+  
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);

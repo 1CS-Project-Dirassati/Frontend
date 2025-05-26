@@ -32,10 +32,11 @@ import {
   Notebook,
 } from "lucide-react";
 import { debounce } from "lodash";
-
+import { useSelector } from "react-redux";
 const { Content, Footer } = Layout;
 
 const DashboardLayout = ({ children }) => {
+    const parent = useSelector((state)=>state.userinfo.userProfile) 
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
@@ -244,7 +245,7 @@ const DashboardLayout = ({ children }) => {
                       </AvatarFallback>
                     </Avatar>
                     <span className="hidden sm:inline text-sm font-medium">
-                      Hamid
+                      {parent.first_name}
                     </span>
                   </Button>
                 </DropdownMenuTrigger>

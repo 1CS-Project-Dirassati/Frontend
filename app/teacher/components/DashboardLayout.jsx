@@ -79,13 +79,13 @@ const DashboardLayout = ({ children }) => {
       key: "chat-parents",
       icon: <TeamOutlined />,
       label: "Chat with Parents",
-      href: "/teacher/unapproved",
+      href: "/teacher/chatparent",
     },
     {
       key: "chat-students",
       icon: <TeamOutlined />,
       label: "Chat with Students",
-      href: "/teacher/unapproved",
+      href: "/teacher/chatstudent",
     },
     {
       key: "schedule",
@@ -97,7 +97,7 @@ const DashboardLayout = ({ children }) => {
       key: "attendance",
       icon: <Notebook />,
       label: "Add Marks",
-      href: "/teacher/attendance",
+      href: "/teacher/marks",
     },
     {
       key: "profile",
