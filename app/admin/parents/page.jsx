@@ -29,22 +29,25 @@ export default function Parents() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const token = useSelector((state) => state.auth.accessToken); // Adjust token retrieval as needed
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalParents, setTotalParents] = useState(0);
+
+  const token = useSelector((state) => state.auth.accessToken);
   const router = useRouter();
-  const fetchParents = async () => {
+
+  const fetchParents = async (page = currentPage, perPage = pageSize) => {
     setLoading(true);
     try {
       const response = await apiCall(
         "get",
-        "/api/parents/?page=1&per_page=10",
+        `/api/parents/?page=${page}&per_page=${perPage}`,
         null,
-        {
-          token // Adjust token retrieval as needed
-        }
+        { token }
       );
-      setData(response.parents || response); // Adjust based on your API response structure
+      setData(response.parents || response.results || []);
+      setTotalParents(response.total || response.count || 0);
       setError(null);
-      
     } catch (err) {
       setError("Failed to fetch parents");
       message.error("Failed to fetch parents");
@@ -52,10 +55,10 @@ export default function Parents() {
       setLoading(false);
     }
   };
-  // Fetch parents on component mount
+
   useEffect(() => {
-    fetchParents();
-  }, []);
+    fetchParents(currentPage, pageSize);
+  }, [currentPage, pageSize]);
 
   const fetchParentStudents = async (parentId) => {
     try {
@@ -63,11 +66,9 @@ export default function Parents() {
         "get",
         `api/students/?parent_id=${parentId}&page=1&per_page=100`,
         null,
-        {
-          token, // Adjust token retrieval as needed
-        }
+        { token }
       );
-      return response.students || response; // Adjust based on your API response structure
+      return response.students || response.results || [];
     } catch (err) {
       message.error("Failed to fetch students");
       return [];
@@ -76,11 +77,9 @@ export default function Parents() {
 
   const updateParent = async (id, values) => {
     try {
-      await apiCall("put", `api/parents/${id}`, values, {
-        token, // Adjust token retrieval as needed
-      });
+      await apiCall("put", `api/parents/${id}`, values, { token });
       message.success("Parent updated successfully");
-      fetchParents(); // Refresh the parent list
+      fetchParents();
     } catch (err) {
       message.error("Failed to update parent");
     }
@@ -88,11 +87,9 @@ export default function Parents() {
 
   const deleteParent = async (id) => {
     try {
-      await apiCall("delete", `api/parents/${id}`, null, {
-        token, // Adjust token retrieval as needed
-      });
+      await apiCall("delete", `api/parents/${id}`, null, { token });
       message.success("Parent deleted successfully");
-      fetchParents(); // Refresh the parent list
+      fetchParents();
     } catch (err) {
       message.error("Failed to delete parent");
     }
@@ -132,9 +129,7 @@ export default function Parents() {
             Delete
           </span>
         ),
-        onClick: () => {
-          deleteParent(record.id);
-        },
+        onClick: () => deleteParent(record.id),
       },
     ],
   });
@@ -165,7 +160,7 @@ export default function Parents() {
             setStudentDialogOpen(true);
           }}
         >
-          View 
+          View
         </ShadcnButton>
       ),
     },
@@ -210,15 +205,21 @@ export default function Parents() {
         columns={columns}
         dataSource={data}
         rowKey="id"
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-          pageSizeOptions: ["10", "20", "50"],
-        }}
+        loading={loading}
         bordered
         className="shadow-md bg-background rounded-lg"
         rowClassName="hover:bg-accent/10"
-        loading={loading}
+        pagination={{
+          current: currentPage,
+          pageSize: pageSize,
+          total: totalParents,
+          showSizeChanger: true,
+          pageSizeOptions: ["10", "20", "50"],
+          onChange: (page, pageSize) => {
+            setCurrentPage(page);
+            setPageSize(pageSize);
+          },
+        }}
       />
 
       {/* Edit Modal */}
@@ -256,7 +257,7 @@ export default function Parents() {
               <ShadcnInput className="border-border" />
             </Form.Item>
             <Form.Item
-              name="phone_number" // Changed to match API field
+              name="phone_number"
               label="Phone"
               rules={[
                 { required: true, message: "Please enter a phone number" },

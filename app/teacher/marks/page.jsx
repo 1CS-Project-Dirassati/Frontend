@@ -6,39 +6,9 @@ import { useSelector } from "react-redux";
 import { jwtDecode } from "jwt-decode";
 import apiCall from "@/components/utils/apiCall";
 
-// ========== Fetchers ==========
+// ===== FETCHERS OUTSIDE COMPONENT =====
 
-const fetchModulesAndGroups = async (teacherId, token) => {
-  console.log("Fetching modules for teacher:", teacherId);
-  const res = await apiCall(
-    "get",
-    `/api/modules/?teacher_id=${teacherId}`,
-    null,
-    { token }
-  );
-
-  console.log("Modules API response:", res);
-
-  const fetchedModules = res.modules || res.data || [];
-  const allGroups = fetchedModules
-    .flatMap((m) => m.groups || [])
-    .filter((g, i, self) => self.findIndex((x) => x.id === g.id) === i);
-
-  return { modules: fetchedModules, groups: allGroups };
-};
-
-const fetchStudentsForGroup = async (groupId, token) => {
-  console.log("Fetching students for group:", groupId);
-  const res = await apiCall("get", `/api/groups/${groupId}/students/`, null, {
-    token,
-  });
-
-  console.log("Students API response:", res);
-
-  return res.students || res.data || [];
-};
-
-// ========== Component ==========
+// ========== COMPONENT ==========
 
 export default function TeacherMarksPage() {
   const token = useSelector((state) => state.auth.accessToken);
@@ -52,28 +22,45 @@ export default function TeacherMarksPage() {
 
   const teacherId = token ? jwtDecode(token)?.teacher_id : null;
 
-  console.log("Decoded token teacherId:", teacherId);
-  console.log("Current token:", token);
+  const fetchModulesAndGroups = async (teacherId, token) => {
+    const res = await apiCall(
+      "get",
+      `/api/modules/?teacher_id=${teacherId}`,
+      null,
+      { token }
+    );
+    const fetchedModules = res.modules || res.data || [];
+
+    const allGroups = fetchedModules
+      .flatMap((m) => m.groups || [])
+      .filter((g, i, self) => self.findIndex((x) => x.id === g.id) === i);
+
+    return { modules: fetchedModules, groups: allGroups };
+  };
+
+  const fetchStudentsForGroup = async (groupId, token) => {
+    const res = await apiCall("get", `/api/groups/${groupId}/students/`, null, {
+      token,
+    });
+    return res.students || res.data || [];
+  };
 
   useEffect(() => {
-    if (!token || !teacherId) {
-      console.warn("No token or teacher ID — skipping module fetch.");
-      return;
-    }
+    if (!token || !teacherId) return;
 
     fetchModulesAndGroups(teacherId, token)
       .then(({ modules, groups }) => {
         setModules(modules);
         setGroups(groups);
       })
-      .catch((err) => {
-        console.error("Error fetching modules:", err);
-        message.error("Failed to load modules.");
-      });
+      .catch(() => message.error("Failed to load modules."));
   }, [token, teacherId]);
 
   useEffect(() => {
-    if (!selectedGroup || !token) return;
+    if (!selectedGroup) {
+      setStudents([]);
+      return;
+    }
 
     setLoadingStudents(true);
     fetchStudentsForGroup(selectedGroup, token)
@@ -87,10 +74,7 @@ export default function TeacherMarksPage() {
           }))
         );
       })
-      .catch((err) => {
-        console.error("Error fetching students:", err);
-        message.error("Failed to load students.");
-      })
+      .catch(() => message.error("Failed to load students."))
       .finally(() => setLoadingStudents(false));
   }, [selectedGroup, token]);
 

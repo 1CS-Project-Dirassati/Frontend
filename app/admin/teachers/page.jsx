@@ -25,26 +25,31 @@ import { useRouter } from "next/navigation";
 export default function Teachers() {
   const router = useRouter();
   const token = useSelector((state) => state.auth.accessToken);
+
   const [teachers, setTeachers] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [modules, setModules] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalTeachers, setTotalTeachers] = useState(0);
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [form] = Form.useForm();
 
-  const fetchTeachers = async () => {
+  const fetchTeachers = async (page = currentPage, perPage = pageSize) => {
     setLoading(true);
     try {
       const res = await apiCall(
         "get",
-        "/api/teachers/?page=1&per_page=100",
+        `/api/teachers/?page=${page}&per_page=${perPage}`,
         null,
         { token }
       );
-      const teacherList = res.teachers || res.data || [];
 
-      // Fetch their modules
+      const teacherList = res.teachers || res.results || [];
       const enrichedTeachers = await Promise.all(
         teacherList.map(async (teacher) => {
           const modRes = await apiCall(
@@ -56,8 +61,10 @@ export default function Teachers() {
           return { ...teacher, modules: modRes.modules || [] };
         })
       );
+
       setTeachers(enrichedTeachers);
-    } catch (err) {
+      setTotalTeachers(res.total || res.count || 0);
+    } catch {
       message.error("Failed to load teachers");
     } finally {
       setLoading(false);
@@ -75,10 +82,10 @@ export default function Teachers() {
 
   useEffect(() => {
     if (token) {
-      fetchTeachers();
+      fetchTeachers(currentPage, pageSize);
       fetchModules();
     }
-  }, [token]);
+  }, [token, currentPage, pageSize]);
 
   const handleEdit = (record) => {
     setSelectedTeacher(record);
@@ -101,7 +108,6 @@ export default function Teachers() {
 
   const syncModules = async (teacherId, newModuleIds) => {
     const oldModuleIds = selectedTeacher?.modules?.map((m) => m.id) || [];
-
     const toAdd = newModuleIds.filter((id) => !oldModuleIds.includes(id));
     const toRemove = oldModuleIds.filter((id) => !newModuleIds.includes(id));
 
@@ -253,7 +259,17 @@ export default function Teachers() {
           dataSource={teachers}
           rowKey="id"
           loading={loading}
-          pagination={{ pageSize: 10 }}
+          pagination={{
+            current: currentPage,
+            pageSize: pageSize,
+            total: totalTeachers,
+            showSizeChanger: true,
+            pageSizeOptions: ["10", "20", "50"],
+            onChange: (page, size) => {
+              setCurrentPage(page);
+              setPageSize(size);
+            },
+          }}
           scroll={{ x: 900 }}
         />
       </div>

@@ -19,18 +19,95 @@ import {
 import { Button as ShadcnButton } from "@/components/ui/button";
 import { Input as ShadcnInput } from "@/components/ui/input";
 import { useSelector } from "react-redux";
-import apiCall from "@/components/utils/apiCall"; // Import apiCall (adjust path as needed)
+import apiCall from "@/components/utils/apiCall";
 
-// Translation object (based on StudentsGroups component)
+// 🈯 Translations
 const translations = {
   fr: {
+    labels: {
+      name: "Nom",
+      email: "Email",
+      level: "Niveau",
+      group: "Groupe",
+      actions: "Actions",
+      unapprovedStudents: "Étudiants non approuvés",
+      viewDocs: "Voir les documents",
+      accept: "Accepter",
+      reject: "Rejeter",
+      sendNotification: "Envoyer une notification",
+      typeMessage: "Écrivez votre message...",
+      missingDocs: "Documents manquants",
+      underReview: "Demande en cours d'examen",
+      send: "Envoyer",
+    },
     success: {
       loadData: "Données chargées avec succès !",
       updateStudent: "Étudiant mis à jour avec succès !",
+      notificationSent: "Notification envoyée à l'étudiant",
     },
     errors: {
       loadDataFailed: "Échec du chargement des données.",
       updateStudentFailed: "Échec de la mise à jour de l'étudiant.",
+      notificationFailed: "Échec de l'envoi de la notification.",
+      emptyNotification: "Veuillez entrer un message de notification.",
+    },
+  },
+  en: {
+    labels: {
+      name: "Name",
+      email: "Email",
+      level: "Level",
+      group: "Group",
+      actions: "Actions",
+      unapprovedStudents: "Unapproved Students",
+      viewDocs: "View Documents",
+      accept: "Accept",
+      reject: "Reject",
+      sendNotification: "Send Notification",
+      typeMessage: "Type your message...",
+      missingDocs: "Missing Docs",
+      underReview: "Under Review",
+      send: "Send",
+    },
+    success: {
+      loadData: "Data loaded successfully!",
+      updateStudent: "Student updated successfully!",
+      notificationSent: "Notification sent to student",
+    },
+    errors: {
+      loadDataFailed: "Failed to load data.",
+      updateStudentFailed: "Failed to update student.",
+      notificationFailed: "Failed to send notification.",
+      emptyNotification: "Please enter a notification message.",
+    },
+  },
+  ar: {
+    labels: {
+      name: "الاسم",
+      email: "البريد الإلكتروني",
+      level: "المستوى",
+      group: "المجموعة",
+      actions: "الإجراءات",
+      unapprovedStudents: "الطلاب غير المعتمدين",
+      viewDocs: "عرض المستندات",
+      accept: "قبول",
+      reject: "رفض",
+      sendNotification: "إرسال إشعار",
+      typeMessage: "اكتب رسالتك...",
+      missingDocs: "مستندات مفقودة",
+      underReview: "الطلب قيد المراجعة",
+      send: "إرسال",
+    },
+    success: {
+      loadData: "تم تحميل البيانات بنجاح!",
+      updateStudent: "تم تحديث الطالب بنجاح!",
+      notificationSent: "تم إرسال الإشعار إلى الطالب",
+    },
+    errors: {
+      loadDataFailed: "فشل في تحميل البيانات.",
+      updateStudentFailed: "فشل في تحديث الطالب.",
+      notificationFailed: "فشل في إرسال الإشعار.",
+      emptyNotification: "يرجى إدخال رسالة إشعار.",
     },
   },
 };
@@ -46,10 +123,9 @@ export default function UnapprovedStudents() {
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const token = useSelector((state) => state.auth.accessToken);
-  const language = "fr"; // Default to French; adjust as needed
+  const language = "fr"; // Change dynamically if needed
   const t = translations[language];
 
-  // Fetch data on mount
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
@@ -59,18 +135,17 @@ export default function UnapprovedStudents() {
           getLevels(),
           getGroups(),
         ]);
-        setStudents(Array.isArray(studentsData) ? studentsData : []);
-        setLevels(Array.isArray(levelsData) ? levelsData : []);
-        setGroups(Array.isArray(groupsData) ? groupsData : []);
-      } catch (error) {
-        console.error("Failed to load data:", error);
+        setStudents(studentsData || []);
+        setLevels(levelsData || []);
+        setGroups(groupsData || []);
+      } catch {
         message.error(t.errors.loadDataFailed);
       } finally {
         setIsLoading(false);
       }
     };
     fetchData();
-  }, [token, t]);
+  }, [token]);
 
   const getStudents = async () => {
     try {
@@ -82,47 +157,31 @@ export default function UnapprovedStudents() {
       );
       message.success(t.success.loadData);
       return response.students || response;
-    } catch (err) {
+    } catch {
       message.error(t.errors.loadDataFailed);
-      throw err;
+      throw new Error();
     }
   };
 
   const updateStudent = async (id, values) => {
     try {
-      await apiCall("put", `/api/students/${id}`, values, { token });
+      await apiCall("patch", `/api/students/${id}/approval`, values, { token });
       message.success(t.success.updateStudent);
-    } catch (err) {
+    } catch {
       message.error(t.errors.updateStudentFailed);
-      throw err;
+      throw new Error();
     }
   };
 
   const getLevels = async () => {
-    try {
-      const response = await apiCall("get", "/api/levels/", null, { token });
-      message.success(t.success.loadData);
-      return response.levels || response;
-    } catch (err) {
-      message.error(t.errors.loadDataFailed);
-      throw err;
-    }
+    const response = await apiCall("get", "/api/levels/", null, { token });
+    return response.levels || response;
   };
 
   const getGroups = async () => {
-    try {
-      const response = await apiCall("get", "/api/groups/", null, { token });
-      message.success(t.success.loadData);
-      return response.groups || response;
-    } catch (err) {
-      message.error(t.errors.loadDataFailed);
-      throw err;
-    }
+    const response = await apiCall("get", "/api/groups/", null, { token });
+    return response.groups || response;
   };
-
-  const unapprovedStudents = students.filter(
-    (s) => !s.is_approved && s.is_active !== false
-  );
 
   const getLevelName = (id) => levels.find((l) => l.id === id)?.name || "—";
   const getGroupName = (id) => groups.find((g) => g.id === id)?.name || "—";
@@ -142,48 +201,39 @@ export default function UnapprovedStudents() {
 
   const sendNotification = async () => {
     if (!notificationText.trim()) {
-      message.error("Please enter a notification message.");
+      message.error(t.errors.emptyNotification);
       return;
     }
     try {
-      // Placeholder: Replace with actual API call to send notification
       await apiCall(
         "post",
-        `/api/notifications/`,
+        "/api/notifications/",
         {
           student_id: selectedStudentId,
           message: notificationText,
         },
         { token }
       );
-      message.success(`Notification sent to student ${selectedStudentId}`);
+
+      message.success(`${t.success.notificationSent} ${selectedStudentId}`);
       setNotifyDialogOpen(false);
       setNotificationText("");
       setSelectedStudentId(null);
-    } catch (error) {
-      console.error("Failed to send notification:", error);
-      message.error("Failed to send notification.");
+    } catch {
+      message.error(t.errors.notificationFailed);
     }
   };
 
   const handleAccept = async (id) => {
-    try {
-      await updateStudent(id, { is_approved: true });
-      const updatedStudents = await getStudents();
-      setStudents(updatedStudents);
-    } catch (error) {
-      console.error("Failed to accept student:", error);
-    }
+    await updateStudent(id, { is_approved: true });
+    const updated = await getStudents();
+    setStudents(updated);
   };
 
   const handleReject = async (id) => {
-    try {
-      await updateStudent(id, { is_approved: false });
-      const updatedStudents = await getStudents();
-      setStudents(updatedStudents);
-    } catch (error) {
-      console.error("Failed to reject student:", error);
-    }
+    await updateStudent(id, { is_approved: false });
+    const updated = await getStudents();
+    setStudents(updated);
   };
 
   const actionMenu = (record) => ({
@@ -193,7 +243,7 @@ export default function UnapprovedStudents() {
         label: (
           <span>
             <FilePdfOutlined className="mr-2" />
-            View Documents
+            {t.labels.viewDocs}
           </span>
         ),
         onClick: () => openPdf(record.docs_url),
@@ -203,7 +253,7 @@ export default function UnapprovedStudents() {
         label: (
           <span>
             <CheckOutlined className="mr-2 text-green-600" />
-            Accept
+            {t.labels.accept}
           </span>
         ),
         onClick: () => handleAccept(record.id),
@@ -213,7 +263,7 @@ export default function UnapprovedStudents() {
         label: (
           <span>
             <CloseOutlined className="mr-2 text-red-600" />
-            Reject
+            {t.labels.reject}
           </span>
         ),
         onClick: () => handleReject(record.id),
@@ -223,7 +273,7 @@ export default function UnapprovedStudents() {
         label: (
           <span>
             <BellOutlined className="mr-2" />
-            Send Notification
+            {t.labels.sendNotification}
           </span>
         ),
         onClick: () => openNotify(record.id),
@@ -233,25 +283,25 @@ export default function UnapprovedStudents() {
 
   const columns = [
     {
-      title: "Name",
+      title: t.labels.name,
       key: "name",
       render: (_, record) => `${record.first_name} ${record.last_name}`,
     },
     {
-      title: "Email",
+      title: t.labels.email,
       dataIndex: "email",
       key: "email",
     },
     {
-      title: "Level",
+      title: t.labels.level,
       render: (_, record) => getLevelName(record.level_id),
     },
     {
-      title: "Group",
+      title: t.labels.group,
       render: (_, record) => getGroupName(record.group_id),
     },
     {
-      title: "Actions",
+      title: t.labels.actions,
       render: (_, record) => (
         <Dropdown menu={actionMenu(record)} trigger={["click"]}>
           <Button icon={<MoreOutlined />} />
@@ -262,17 +312,16 @@ export default function UnapprovedStudents() {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-6">Unapproved Students</h1>
+      <h1 className="text-2xl font-bold mb-6">{t.labels.unapprovedStudents}</h1>
       <Table
         columns={columns}
-        dataSource={unapprovedStudents}
+        dataSource={students.filter(
+          (s) => !s.is_approved && s.is_active !== false
+        )}
         rowKey="id"
         bordered
         loading={isLoading}
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-        }}
+        pagination={{ pageSize: 50, showSizeChanger: true }}
       />
 
       {/* PDF Viewer Dialog */}
@@ -286,34 +335,30 @@ export default function UnapprovedStudents() {
       <Dialog open={notifyDialogOpen} onOpenChange={setNotifyDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Send Notification</DialogTitle>
-            <DialogDescription>
-              To student ID: {selectedStudentId}
-            </DialogDescription>
+            <DialogTitle>{t.labels.sendNotification}</DialogTitle>
+            <DialogDescription>ID: {selectedStudentId}</DialogDescription>
           </DialogHeader>
           <ShadcnInput
-            placeholder="Type your message..."
+            placeholder={t.labels.typeMessage}
             value={notificationText}
             onChange={(e) => setNotificationText(e.target.value)}
           />
           <div className="flex gap-2 mt-2">
             <ShadcnButton
               variant="outline"
-              onClick={() =>
-                setNotificationText("Please upload your documents.")
-              }
+              onClick={() => setNotificationText(t.labels.missingDocs)}
             >
-              Missing Docs
+              {t.labels.missingDocs}
             </ShadcnButton>
             <ShadcnButton
               variant="outline"
-              onClick={() =>
-                setNotificationText("Your request is under review.")
-              }
+              onClick={() => setNotificationText(t.labels.underReview)}
             >
-              Under Review
+              {t.labels.underReview}
             </ShadcnButton>
-            <ShadcnButton onClick={sendNotification}>Send</ShadcnButton>
+            <ShadcnButton onClick={sendNotification}>
+              {t.labels.send}
+            </ShadcnButton>
           </div>
         </DialogContent>
       </Dialog>

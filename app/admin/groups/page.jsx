@@ -426,10 +426,12 @@ export default function StudentsGroups() {
 
   const updateStudent = async (id, values) => {
     try {
+      console.log(`Updating student ${id} with payload:`, values);
       await apiCall("put", `/api/students/${id}`, values, { token });
       message.success(t.success.updateStudent);
     } catch (err) {
-      message.error(t.errors.updateStudentFailed);
+      console.error("Update student error:", err.response || err);
+      message.error(err.response?.message || t.errors.updateStudentFailed);
       throw err;
     }
   };
@@ -480,10 +482,15 @@ export default function StudentsGroups() {
 
   const addGroup = async (groupData) => {
     try {
-      await apiCall("post", "/api/groups/", groupData, { token });
+      console.log("Creating group with payload:", groupData);
+      const response = await apiCall("post", "/api/groups/", groupData, {
+        token,
+      });
       message.success(t.success.addGroup(groupData.name));
+      return response; // Return the new group data
     } catch (err) {
-      message.error(t.errors.addGroupFailed);
+      console.error("Add group error:", err.response || err);
+      message.error(err.response?.message || t.errors.addGroupFailed);
       throw err;
     }
   };
@@ -526,6 +533,13 @@ export default function StudentsGroups() {
           getParents(),
           getTeachers(),
         ]);
+        console.log("Fetched Data:", {
+          studentsData,
+          groupsData,
+          levelsData,
+          parentsData,
+          teachersData,
+        });
         setStudents(Array.isArray(studentsData) ? studentsData : []);
         setGroups(Array.isArray(groupsData) ? groupsData : []);
         setLevels(Array.isArray(levelsData) ? levelsData : []);
@@ -628,10 +642,10 @@ export default function StudentsGroups() {
       email: newStudent.email.trim(),
       level_id: Number(newStudent.level_id),
       group_id:
-        newStudent.group_id === "none" ? null : Number(newStudent.group_id),
+        newStudent.group_id === "none" ? 0 : Number(newStudent.group_id),
       parent_id: Number(newStudent.parent_id),
       is_approved: false,
-      docs_url: null,
+      docs_url: "",
       is_active: true,
       date_of_birth: newStudent.date_of_birth,
       national_id: newStudent.national_id,
@@ -670,12 +684,33 @@ export default function StudentsGroups() {
     if (!editStudent || isSubmitting) return;
     setIsSubmitting(true);
 
+    const level = levels.find((l) => l.id === Number(editStudent.level_id));
+    if (!level) {
+      message.error(t.errors.invalidLevel);
+      setIsSubmitting(false);
+      return;
+    }
+
+    const group =
+      editStudent.group_id !== "none"
+        ? groups.find((g) => g.id === Number(editStudent.group_id))
+        : null;
+    if (editStudent.group_id !== "none" && !group) {
+      message.error(t.errors.invalidGroup);
+      setIsSubmitting(false);
+      return;
+    }
+
     const updates = {
-      group_id:
-        editStudent.group_id === "none" ? null : Number(editStudent.group_id),
+      first_name: editStudent.first_name.trim(),
+      last_name: editStudent.last_name.trim(),
       level_id: Number(editStudent.level_id),
-      parent_id: Number(editStudent.parent_id),
+      group_id:
+        editStudent.group_id === "none" ? 0 : Number(editStudent.group_id),
+      docs_url: editStudent.docs_url || "",
     };
+
+    console.log("Updating student with payload:", updates);
 
     updateStudent(editStudent.id, updates)
       .then(() => {
@@ -685,14 +720,16 @@ export default function StudentsGroups() {
         setStudents(updatedStudents);
         setEditStudent(null);
         setIsEditStudentOpen(false);
+        message.success(t.success.updateStudent);
       })
       .catch((error) => {
-        console.error("Failed to update student:", error);
+        console.error("Failed to update student:", error.response || error);
+        message.error(error.response?.message || t.errors.updateStudentFailed);
       })
       .finally(() => {
         setIsSubmitting(false);
       });
-  }, [editStudent, isSubmitting, t]);
+  }, [editStudent, isSubmitting, levels, groups, t]);
 
   const handleDeleteStudent = useCallback((id) => {
     setDeleteId(id);
@@ -725,11 +762,7 @@ export default function StudentsGroups() {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-    if (
-      !newGroup.name.trim() ||
-      !newGroup.level_id ||
-      isNaN(Number(newGroup.level_id))
-    ) {
+    if (!newGroup.name.trim() || !newGroup.level_id) {
       message.error(
         t.errors.required(t.groupName) + " " + t.errors.required(t.level)
       );
@@ -748,13 +781,6 @@ export default function StudentsGroups() {
       return;
     }
 
-    const teacher = teachers.find((t) => t.id === Number(newGroup.teacher_id));
-    if (newGroup.teacher_id && !teacher && newGroup.teacher_id !== "none") {
-      message.error(t.errors.invalidTeacher);
-      setIsSubmitting(false);
-      return;
-    }
-
     const level = levels.find((l) => l.id === Number(newGroup.level_id));
     if (!level) {
       message.error(t.errors.invalidLevel);
@@ -762,23 +788,39 @@ export default function StudentsGroups() {
       return;
     }
 
+    const teacher =
+      newGroup.teacher_id !== "none" &&
+      teachers.find((t) => t.id === Number(newGroup.teacher_id));
+    if (newGroup.teacher_id !== "none" && !teacher) {
+      message.error(t.errors.invalidTeacher);
+      setIsSubmitting(false);
+      return;
+    }
+
     const group = {
       name: trimmedGroupName,
       level_id: Number(newGroup.level_id),
-      /* teacher_id:
-        newGroup.teacher_id === "none" ? null : Number(newGroup.teacher_id), */
+      teacher_id:
+        newGroup.teacher_id === "none" ? null : Number(newGroup.teacher_id),
     };
 
-    console.log("Group payload:", group);
+    console.log("Creating group with payload:", group);
 
     addGroup(group)
-      .then((newGroup) => {
-        setGroups((prev) => [...prev, newGroup]);
+      .then((newGroupResponse) => {
+        setGroups((prev) => [...prev, newGroupResponse]);
         if (bulkSelected.length > 0) {
           return Promise.all(
-            bulkSelected.map((id) =>
-              updateStudent(id, { group_id: newGroup.id })
-            )
+            bulkSelected.map((id) => {
+              const student = students.find((s) => s.id === id);
+              return updateStudent(id, {
+                first_name: student.first_name.trim(),
+                last_name: student.last_name.trim(),
+                level_id: Number(student.level_id),
+                group_id: newGroupResponse.id,
+                docs_url: student.docs_url || "",
+              });
+            })
           ).then(() => getStudents());
         }
         return getStudents();
@@ -788,15 +830,25 @@ export default function StudentsGroups() {
         setNewGroup({ name: "", level_id: "", teacher_id: "" });
         setBulkSelected([]);
         setIsAddGroupOpen(false);
+        message.success(t.success.addGroup(trimmedGroupName));
       })
       .catch((error) => {
-        console.error("Failed to add group:", error);
-        message.error(error.response?.data?.message || t.errors.addGroupFailed);
+        console.error("Failed to add group:", error.response || error);
+        message.error(error.response?.message || t.errors.addGroupFailed);
       })
       .finally(() => {
         setIsSubmitting(false);
       });
-  }, [newGroup, bulkSelected, groups, isSubmitting, levels, teachers, t]);
+  }, [
+    newGroup,
+    bulkSelected,
+    groups,
+    isSubmitting,
+    levels,
+    teachers,
+    students,
+    t,
+  ]);
 
   const addGroupFromDrag = useCallback(() => {
     if (!activeStudent || isSubmitting) return;
@@ -817,16 +869,18 @@ export default function StudentsGroups() {
       return;
     }
 
-    const teacher = teachers.find((t) => t.id === Number(newGroup.teacher_id));
-    if (newGroup.teacher_id && !teacher && newGroup.teacher_id !== "none") {
-      message.error(t.errors.invalidTeacher);
+    const level = levels.find((l) => l.id === Number(newGroup.level_id));
+    if (!level) {
+      message.error(t.errors.invalidLevel);
       setIsSubmitting(false);
       return;
     }
 
-    const level = levels.find((l) => l.id === Number(newGroup.level_id));
-    if (!level) {
-      message.error(t.errors.invalidLevel);
+    const teacher =
+      newGroup.teacher_id !== "none" &&
+      teachers.find((t) => t.id === Number(newGroup.teacher_id));
+    if (newGroup.teacher_id !== "none" && !teacher) {
+      message.error(t.errors.invalidTeacher);
       setIsSubmitting(false);
       return;
     }
@@ -838,14 +892,24 @@ export default function StudentsGroups() {
         newGroup.teacher_id === "none" ? null : Number(newGroup.teacher_id),
     };
 
+    console.log("Creating group from drag with payload:", group);
+
     addGroup(group)
-      .then(() => {
-        return getGroups();
+      .then((newGroupResponse) => {
+        return getGroups().then((updatedGroups) => ({
+          newGroupResponse,
+          updatedGroups,
+        }));
       })
-      .then((updatedGroups) => {
-        const newGroupId = updatedGroups[updatedGroups.length - 1].id;
-        return updateStudent(activeStudent.id, { group_id: newGroupId }).then(
-          () => Promise.all([getStudents(), Promise.resolve(updatedGroups)])
+      .then(({ newGroupResponse, updatedGroups }) => {
+        return updateStudent(activeStudent.id, {
+          first_name: activeStudent.first_name.trim(),
+          last_name: activeStudent.last_name.trim(),
+          level_id: Number(activeStudent.level_id),
+          group_id: newGroupResponse.id,
+          docs_url: activeStudent.docs_url || "",
+        }).then(() =>
+          Promise.all([getStudents(), Promise.resolve(updatedGroups)])
         );
       })
       .then(([updatedStudents, updatedGroups]) => {
@@ -854,9 +918,14 @@ export default function StudentsGroups() {
         setNewGroup({ name: "", level_id: "", teacher_id: "" });
         setIsNewGroupPromptOpen(false);
         setActiveStudent(null);
+        message.success(t.success.addGroup(trimmedGroupName));
       })
       .catch((error) => {
-        console.error("Failed to add group from drag:", error);
+        console.error(
+          "Failed to add group from drag:",
+          error.response || error
+        );
+        message.error(error.response?.message || t.errors.addGroupFailed);
       })
       .finally(() => {
         setIsSubmitting(false);
@@ -890,22 +959,31 @@ export default function StudentsGroups() {
         return;
       }
       const targetGroupId =
-        over.id === "unassigned" ? null : Number(over.id.split("-")[1]);
-      if (
-        targetGroupId === null ||
-        groups.some((g) => g.id === targetGroupId)
-      ) {
+        over.id === "unassigned" ? 0 : Number(over.id.split("-")[1]);
+      if (targetGroupId === 0 || groups.some((g) => g.id === targetGroupId)) {
         if (student.group_id !== targetGroupId) {
-          updateStudent(student.id, { group_id: targetGroupId })
+          updateStudent(student.id, {
+            first_name: student.first_name.trim(),
+            last_name: student.last_name.trim(),
+            level_id: Number(student.level_id),
+            group_id: targetGroupId,
+            docs_url: student.docs_url || "",
+          })
             .then(() => {
               return getStudents();
             })
             .then((updatedStudents) => {
               setStudents(updatedStudents);
+              message.success(t.success.updateStudent);
             })
             .catch((error) => {
-              console.error("Failed to reassign student:", error);
-              message.error(t.errors.updateStudentFailed);
+              console.error(
+                "Failed to reassign student:",
+                error.response || error
+              );
+              message.error(
+                error.response?.message || t.errors.updateStudentFailed
+              );
             });
         }
       }
@@ -928,15 +1006,22 @@ export default function StudentsGroups() {
       if (!bulkSelected.length || isSubmitting) return;
       setIsSubmitting(true);
 
-      const targetGroupId = groupId === "unassigned" ? null : Number(groupId);
-      if (
-        targetGroupId === null ||
-        groups.some((g) => g.id === targetGroupId)
-      ) {
+      const targetGroupId = groupId === "unassigned" ? 0 : Number(groupId);
+      if (targetGroupId === 0 || groups.some((g) => g.id === targetGroupId)) {
         Promise.all(
-          bulkSelected.map((id) =>
-            updateStudent(id, { group_id: targetGroupId })
-          )
+          bulkSelected.map((id) => {
+            const student = students.find((s) => s.id === id);
+            if (!student) {
+              return Promise.reject(new Error(`Student ${id} not found`));
+            }
+            return updateStudent(id, {
+              first_name: student.first_name.trim(),
+              last_name: student.last_name.trim(),
+              level_id: Number(student.level_id),
+              group_id: targetGroupId,
+              docs_url: student.docs_url || "",
+            });
+          })
         )
           .then(() => {
             return getStudents();
@@ -947,8 +1032,8 @@ export default function StudentsGroups() {
             message.success(t.success.bulkAssign);
           })
           .catch((error) => {
-            console.error("Failed to bulk assign:", error);
-            message.error(t.errors.bulkAssignFailed);
+            console.error("Failed to bulk assign:", error.response || error);
+            message.error(error.response?.message || t.errors.bulkAssignFailed);
           })
           .finally(() => {
             setIsSubmitting(false);
@@ -958,7 +1043,7 @@ export default function StudentsGroups() {
         setIsSubmitting(false);
       }
     },
-    [bulkSelected, isSubmitting, groups, t]
+    [bulkSelected, isSubmitting, groups, students, t]
   );
 
   const exportCSV = useCallback(() => {
@@ -1112,64 +1197,12 @@ export default function StudentsGroups() {
             </div>
           </CardContent>
         </Card>
-        {/* Groups Drop Zones */}
-        {/* <Card className="mb-6 bg-background-light shadow-card">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-text">
-              {t.assignGroup}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-3">
-              <DroppableGroup
-                id="unassigned"
-                label={t.unassigned}
-                levelName={null}
-                teacherName={null}
-                t={t}
-              />
-              {groups.map((group) => {
-                const teacher = teachers.find((t) => t.id === group.teacher_id);
-                return (
-                  <DroppableGroup
-                    key={group.id}
-                    id={`group-${group.id}`}
-                    label={group.name}
-                    levelName={
-                      levels.find((l) => l.id === group.level_id)?.name || "N/A"
-                    }
-                    teacherName={
-                      teacher
-                        ? `${teacher.first_name} ${teacher.last_name}`
-                        : t.none
-                    }
-                    isActive={
-                      groupFilter !== "All" && group.id === Number(groupFilter)
-                    }
-                    t={t}
-                  />
-                );
-              })}
-              <DroppableGroup
-                id="new-group"
-                label={t.newGroup}
-                levelName={null}
-                teacherName={null}
-                t={t}
-              />
-            </div>
-          </CardContent>
-        </Card> */}
         {/* Actions */}
         <Card className="mb-6 bg-background-light shadow-card">
           <CardContent className="pt-6">
             <div className="flex flex-col sm:flex-row gap-4 items-center">
               <Button
-                onClick={
-                  () => 
-                    setIsAddStudentOpen(true)
-
-                }
+                onClick={() => setIsAddStudentOpen(true)}
                 className="bg-primary text-text-inverted hover:bg-primary-light w-full sm:w-auto"
                 disabled={isSubmitting}
                 style={{ backgroundColor: "#0771CB" }}
@@ -1181,9 +1214,7 @@ export default function StudentsGroups() {
                   setIsAddGroupOpen(true);
                   setIsNewGroupPromptOpen(false);
                   setIsEditStudentOpen(false);
-                  
-                }
-                }
+                }}
                 className="bg-primary text-text-inverted hover:bg-primary-light w-full sm:w-auto"
                 disabled={isSubmitting}
                 style={{ backgroundColor: "#0771CB" }}
@@ -1647,31 +1678,6 @@ export default function StudentsGroups() {
                       {groups.map((g) => (
                         <SelectItem key={g.id} value={String(g.id)}>
                           {g.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="edit-parent_id" className="text-text">
-                    {t.parent}
-                  </Label>
-                  <Select
-                    value={String(editStudent.parent_id || "")}
-                    onValueChange={(value) =>
-                      setEditStudent({ ...editStudent, parent_id: value })
-                    }
-                  >
-                    <SelectTrigger
-                      id="edit-parent_id"
-                      className="border-border bg-background-light text-text"
-                    >
-                      <SelectValue placeholder={t.parent} />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background border-border">
-                      {parents.map((p) => (
-                        <SelectItem key={p.id} value={String(p.id)}>
-                          {p.first_name} {p.last_name} ({p.email})
                         </SelectItem>
                       ))}
                     </SelectContent>
