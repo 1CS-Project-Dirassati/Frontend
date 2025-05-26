@@ -18,6 +18,8 @@ export default function AddChild() {
     last_name: "",
     email: "",
     docs_url: "",
+    level: "",
+    date_of_birth: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -29,12 +31,24 @@ export default function AddChild() {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
+      ...(name === "date_of_birth" && { age: calculateAge(value) }),
     }));
   };
 
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+  };
+
+  const calculateAge = (dob) => {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
   };
 
   const handleFileUpload = async (e) => {
@@ -87,7 +101,7 @@ export default function AddChild() {
         token: accesstoken,
       });
       setMessage({ type: "success", text: "Child added successfully!" });
-      setFormData({ first_name: "", last_name: "", email: "", docs_url: "" });
+      setFormData({ first_name: "", last_name: "", email: "", docs_url: "", level: "", date_of_birth: "" });
       setUploadUrls([]);
     } catch (error) {
       setMessage({ type: "error", text: "Failed to add child. Please try again." });
@@ -130,6 +144,28 @@ export default function AddChild() {
             placeHolder="Enter email"
             inputValue={formData.email}
             onInputChange={(value) => handleChange({ target: { name: "email", value } })}
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Date of Birth</label>
+          <AntInput
+            type="date"
+            name="date_of_birth"
+            placeHolder="Enter date of birth"
+            inputValue={formData.date_of_birth}
+            onInputChange={(value) => handleChange({ target: { name: "date_of_birth", value } })}
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Level</label>
+          <AntInput
+            type="text"
+            name="level"
+            placeHolder="Enter level"
+            inputValue={formData.level}
+            onInputChange={(value) => handleChange({ target: { name: "level", value } })}
             required
           />
         </div>
