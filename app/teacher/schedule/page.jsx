@@ -23,6 +23,16 @@ const parseTimeSlot = (timeSlot) => {
   };
 };
 
+// Define fixed time slots
+const FIXED_TIME_SLOTS = [
+  { time: '08:00', endTime: '10:00' },
+  { time: '10:00', endTime: '12:00' },
+  { time: '14:00', endTime: '16:00' }
+];
+
+// Define fixed days
+const FIXED_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
 export default function Schedule() {
   const router = useRouter();
   const [semesterIndex, setSemesterIndex] = useState(1);
@@ -93,11 +103,7 @@ export default function Schedule() {
     fetchSessions();
   }, [semesterIndex, week, authToken]);
 
-  // Get unique days and time slots from sessions
-  const days = Array.from(new Set(sessions.map(s => s.day))).sort();
-  const timeSlots = Array.from(new Set(sessions.map(s => s.time))).sort();
-
-  // Build table columns
+  // Build table columns with fixed days
   const columns = [
     { 
       title: "Time", 
@@ -105,28 +111,28 @@ export default function Schedule() {
       key: "time",
       render: (time, record) => `${time} - ${record.endTime}`
     },
-    ...days.map(day => ({
+    ...FIXED_DAYS.map(day => ({
       title: day,
       dataIndex: day,
       key: day,
     }))
   ];
 
-  // Build table data
-  const dataSource = timeSlots.map(slot => {
+  // Build table data with fixed time slots
+  const dataSource = FIXED_TIME_SLOTS.map(slot => {
     const row = { 
-      key: slot, 
-      time: slot,
-      endTime: sessions.find(s => s.time === slot)?.endTime || ''
+      key: slot.time, 
+      time: slot.time,
+      endTime: slot.endTime
     };
     
-    days.forEach(day => {
-      const session = sessions.find(s => s.day === day && s.time === slot);
+    FIXED_DAYS.forEach(day => {
+      const session = sessions.find(s => s.day === day && s.time === slot.time);
       row[day] = session ? (
         <div
           className="cursor-pointer hover:bg-gray-50 p-2 rounded"
           onClick={() => router.push(
-            `/teacher/attendance?sessionId=${session.id}&groupId=${session.groupId}`
+            `/teacher/attendance/${session.id}`
           )}
         >
           <div className="font-semibold text-primary">{session.subject}</div>
@@ -134,7 +140,7 @@ export default function Schedule() {
           <div className="text-sm text-gray-500">Room: {session.room}</div>
         </div>
       ) : (
-        <span className="text-gray-300">-</span>
+        <div className="p-2 text-gray-300">-</div>
       );
     });
     return row;
