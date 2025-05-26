@@ -1,18 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { setUserProfile } from "../redux/features/userinfoSlice";
 import {
   Card as AntCard,
   Col,
   Row,
   Statistic,
-  Button,
+  Button, 
   Select,
   Space,
   Tooltip,
   Tabs,
+  Spin,
 } from "antd";
 import {
   FilterOutlined,
@@ -23,7 +25,7 @@ import {
 import dynamic from "next/dynamic";
 import { Card as ShadcnCard } from "@/components/ui/card";
 import styled from "styled-components";
-
+import     apiCall  from "@/components/utils/apiCall";
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 const StyledSection = styled.div`
@@ -116,14 +118,45 @@ const SidePanel = styled(ShadcnCard)`
   top: 100px;
 `;
 
-export default function Home() {
-  const permision = useSelector((state) => state.auth.role);
-  const searchParams = useSearchParams();
+// Separate the dynamic data fetching into a client component
+function TeacherDashboard({ initialTimeRange }) {
   const router = useRouter();
-  const link = searchParams.get("timeRange")
-  const [timeRange, setTimeRange] = useState(
-   link || "monthly"
-  );
+  const [timeRange, setTimeRange] = useState(initialTimeRange);
+  const permision = useSelector((state) => state.auth.accessToken);
+  const dispatch = useDispatch();
+  if(!permision){
+    router.push("/signin/teacher");
+    return null; // Add early return to prevent rendering while redirecting
+  }
+  const authToken = useSelector((state) => state.auth.accessToken);
+  const techerInfo = useSelector((state)=>state.userinfo.userProfile)
+  useEffect(() => {
+    console.log("hahahahahaha")
+    const fetchStats = async () => {
+      console.log("hahahahahaha")
+  
+      try {
+      const response = await apiCall("get", "/api/teachers/me", null, {
+        token: authToken,
+      });
+
+         dispatch(setUserProfile(response.teacher))
+      
+        setStatsData(stats);
+      } catch (error) {
+      console.log(error.message);
+      setError(error.message);
+    } finally {
+      console.log("loading false")
+    }
+    }
+  
+   
+      fetchStats();
+    
+    
+  }, [authToken]);
+  
 
   const statsData = [
     {
@@ -608,4 +641,21 @@ export default function Home() {
 else{
   router.push("/signin")
 }*/
+}
+
+// Main page component with proper suspense boundaries
+export default function TeacherPage() {
+  const searchParams = useSearchParams();
+  const link = searchParams.get("timeRange") ;
+  const initialTimeRange =  link || "monthly";
+
+  return (
+    <Suspense fallback={
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Spin size="large" />
+      </div>
+    }>
+      <TeacherDashboard initialTimeRange={initialTimeRange} />
+    </Suspense>
+  );
 }

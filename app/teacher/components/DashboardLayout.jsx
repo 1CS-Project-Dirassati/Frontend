@@ -79,31 +79,26 @@ const DashboardLayout = ({ children }) => {
       key: "chat-parents",
       icon: <TeamOutlined />,
       label: "Chat with Parents",
-      href: "/teacher/chatparent",
+      href: "/teacher/chat",
     },
-    {
-      key: "chat-students",
-      icon: <TeamOutlined />,
-      label: "Chat with Students",
-      href: "/teacher/chatstudent",
-    },
+   
     {
       key: "schedule",
       icon: <CalendarOutlined />,
-      label: "schedule & attendance",
+      label: "Sons schedule",
       href: "/teacher/schedule",
     },
     {
-      key: "marks",
+      key: "attendance",
       icon: <Notebook />,
       label: "Add Marks",
-      href: "/teacher/marks",
+      href: "/teacher/attendance",
     },
     {
       key: "profile",
       icon: <User />,
       label: "Profile",
-      href: "/teacher/profile",
+      href: "/teacher/teacherProfile/1",
     },
   ];
 
