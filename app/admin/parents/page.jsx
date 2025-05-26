@@ -29,21 +29,22 @@ export default function Parents() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const token = useSelector((state) => state.auth.accessToken); // Adjust token retrieval as needed
   const router = useRouter();
-
-  // Fetch parents on component mount
-  useEffect(() => {
-    fetchParents();
-  }, []);
-
   const fetchParents = async () => {
     setLoading(true);
     try {
-      const response = await apiCall("get", "/api/parents", null, {
-        token: useSelector((state) => state.auth.accessToken), // Adjust token retrieval as needed
-      });
-      setData(response.data || response); // Adjust based on your API response structure
+      const response = await apiCall(
+        "get",
+        "/api/parents/?page=1&per_page=10",
+        null,
+        {
+          token // Adjust token retrieval as needed
+        }
+      );
+      setData(response.parents || response); // Adjust based on your API response structure
       setError(null);
+      
     } catch (err) {
       setError("Failed to fetch parents");
       message.error("Failed to fetch parents");
@@ -51,18 +52,22 @@ export default function Parents() {
       setLoading(false);
     }
   };
+  // Fetch parents on component mount
+  useEffect(() => {
+    fetchParents();
+  }, []);
 
   const fetchParentStudents = async (parentId) => {
     try {
       const response = await apiCall(
         "get",
-        `api/parents/${parentId}/students`,
+        `api/students/?parent_id=${parentId}&page=1&per_page=100`,
         null,
         {
-          token: useSelector((state) => state.auth.accessToken), // Adjust token retrieval as needed
+          token, // Adjust token retrieval as needed
         }
       );
-      return response.data || response; // Adjust based on your API response structure
+      return response.students || response; // Adjust based on your API response structure
     } catch (err) {
       message.error("Failed to fetch students");
       return [];
@@ -72,7 +77,7 @@ export default function Parents() {
   const updateParent = async (id, values) => {
     try {
       await apiCall("put", `api/parents/${id}`, values, {
-        token: useSelector((state) => state.auth.accessToken), // Adjust token retrieval as needed
+        token, // Adjust token retrieval as needed
       });
       message.success("Parent updated successfully");
       fetchParents(); // Refresh the parent list
@@ -84,7 +89,7 @@ export default function Parents() {
   const deleteParent = async (id) => {
     try {
       await apiCall("delete", `api/parents/${id}`, null, {
-        token: useSelector((state) => state.auth.accessToken), // Adjust token retrieval as needed
+        token, // Adjust token retrieval as needed
       });
       message.success("Parent deleted successfully");
       fetchParents(); // Refresh the parent list
@@ -120,7 +125,7 @@ export default function Parents() {
         },
       },
       {
-        key: "delete",
+        key: "archive",
         label: (
           <span>
             <DeleteOutlined className="mr-2" />
@@ -149,7 +154,7 @@ export default function Parents() {
     { title: "Address", dataIndex: "address", key: "address" },
     {
       title: "Children",
-      key: "children",
+      key: "students",
       render: (_, record) => (
         <ShadcnButton
           variant="ghost"
@@ -160,7 +165,7 @@ export default function Parents() {
             setStudentDialogOpen(true);
           }}
         >
-          View ({selectedStudents.length || 0})
+          View 
         </ShadcnButton>
       ),
     },

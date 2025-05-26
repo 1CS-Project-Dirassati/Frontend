@@ -25,12 +25,17 @@ export default function Modules() {
 
   const fetchLevels = async () => {
     try {
-      const levelsResponse = await apiCall("get", `/api/levels`, null, {
-        token,
-      });
-      setLevels(levelsResponse);
+      const levelsResponse = await apiCall(
+        "get",
+        `/api/levels/?page=1&per_page=100`,
+        null,
+        {
+          token,
+        }
+      );
+      setLevels(levelsResponse.levels || levelsResponse);
     } catch (error) {
-      message.error("Failed to fetch levels");
+    //  message.error("Failed to fetch levels");
     }
   };
 
@@ -39,13 +44,13 @@ export default function Modules() {
       setLoading(true);
       const response = await apiCall(
         "get",
-        `/api/modules?page=${page}&per_page=${pageSize}`,
+        `/api/modules/?page=${page}&per_page=${pageSize}`,
         null,
         { token }
       );
 
       // If API returns shape: { data: [...], total: number }
-      setModules(response.data);
+      setModules(response.modules);
       setPagination((prev) => ({
         ...prev,
         current: page,
@@ -53,7 +58,7 @@ export default function Modules() {
         total: response.total,
       }));
     } catch (error) {
-      message.error("Failed to fetch modules");
+    //  message.error("Failed to fetch modules");
     } finally {
       setLoading(false);
     }

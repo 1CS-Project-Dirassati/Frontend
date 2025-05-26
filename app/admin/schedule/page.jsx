@@ -1,149 +1,90 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Button, Card, Table, Space, Select, message, Tag } from "antd";
-import {
-  PlusOutlined,
-  EyeOutlined,
-  EditOutlined,
-  DeleteOutlined,
-} from "@ant-design/icons";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-// import apiCall from "@/components/utils/apiCall"; // Assuming you have this utility
-
-// Mock data - replace with API calls
-const mockLevels = [
-  { id: "1", name: "1st Year" },
-  { id: "2", name: "2nd Year" },
-  { id: "3", name: "3rd Year" },
-];
-
-const mockSchedules = {
-  1: [
-    {
-      id: "g1s1",
-      levelId: "1",
-      levelName: "1st Year",
-      groupName: "Group A",
-      trimesterName: "Trimester 1",
-      status: "Published",
-    },
-    {
-      id: "g2s1",
-      levelId: "1",
-      levelName: "1st Year",
-      groupName: "Group B",
-      trimesterName: "Trimester 1",
-      status: "Draft",
-    },
-  ],
-  2: [
-    {
-      id: "g3s2",
-      levelId: "2",
-      levelName: "2nd Year",
-      groupName: "Group C",
-      trimesterName: "Trimester 2",
-      status: "Published",
-    },
-  ],
-  3: [],
-};
+import { useSelector } from "react-redux";
+import { Table, Card, Button, Space, Select, message } from "antd";
+import { EyeOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
+import apiCall from "@/components/utils/apiCall";
 
 const AdminSchedulePage = () => {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [schedules, setSchedules] = useState([]);
+  const token = useSelector((state) => state.auth.accessToken);
+
+  const [groups, setGroups] = useState([]);
+  const [levels, setLevels] = useState([]);
   const [selectedLevel, setSelectedLevel] = useState(null);
+  const [loading, setLoading] = useState(false);
 
+  // Fetch Levels
   useEffect(() => {
-    if (selectedLevel) {
-      setLoading(true);
-      // Simulate API call
-      setTimeout(() => {
-        setSchedules(mockSchedules[selectedLevel] || []);
-        setLoading(false);
-      }, 500);
-    } else {
-      setSchedules([]);
-    }
-  }, [selectedLevel]);
+    const fetchLevels = async () => {
+      try {
+        const response = await apiCall("get", "/api/levels/", null, { token });
+        setLevels(response.levels || []);
+      } catch (err) {
+        message.error("Failed to load levels.");
+      }
+    };
 
-  const handleCreateSchedule = () => {
+    fetchLevels();
+  }, [token]);
+
+  // Fetch Groups
+  useEffect(() => {
+    const fetchGroups = async () => {
+      setLoading(true);
+      try {
+        let url = "/api/groups/";
+        if (selectedLevel) {
+          url += `?level_id=${selectedLevel}`;
+        }
+
+        const response = await apiCall("get", url, null, { token });
+        setGroups(response.groups || []);
+      } catch (err) {
+        message.error("Failed to load groups.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGroups();
+  }, [selectedLevel, token]);
+
+  const handleCreate = () => {
     router.push("/admin/schedule/create");
   };
 
-  const handleViewSchedule = (record) => {
-    // For now, log to console. Replace with actual navigation or modal display.
-    console.log("View schedule:", record);
-    message.info(
-      `Viewing schedule for ${record.groupName} - ${record.trimesterName}`
-    );
-    // Example: router.push(`/admin/schedule/view/${record.id}`);
+  const handleView = (groupId) => {
+    router.push(`/admin/schedule/view/${groupId}`);
   };
 
-  const handleEditSchedule = (record) => {
-    console.log("Edit schedule:", record);
-    message.info(`Editing schedule for ${record.groupName}`);
-    // Example: router.push(`/admin/schedule/edit/${record.id}`);
-  };
-
-  const handleDeleteSchedule = (record) => {
-    console.log("Delete schedule:", record);
-    // Add confirmation modal before deleting
-    message.success(`Schedule for ${record.groupName} deleted (mock)`);
-    setSchedules((prev) => prev.filter((s) => s.id !== record.id));
+  const handleEdit = (groupId) => {
+    router.push(`/admin/schedule/edit/${groupId}`);
   };
 
   const columns = [
     {
       title: "Group Name",
-      dataIndex: "groupName",
-      key: "groupName",
+      dataIndex: "name",
+      key: "name",
     },
     {
       title: "Level",
-      dataIndex: "levelName",
-      key: "levelName",
-    },
-    {
-      title: "Trimester",
-      dataIndex: "trimesterName",
-      key: "trimesterName",
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => (
-        <Tag color={status === "Published" ? "green" : "orange"}>
-          {status.toUpperCase()}
-        </Tag>
-      ),
+      dataIndex: ["level", "name"],
+      key: "level",
     },
     {
       title: "Actions",
       key: "actions",
       render: (_, record) => (
         <Space size="middle">
-          <Button
-            icon={<EyeOutlined />}
-            onClick={() => handleViewSchedule(record)}
-          >
+          <Button icon={<EyeOutlined />} onClick={() => handleView(record.id)}>
             View
           </Button>
-          <Button
-            icon={<EditOutlined />}
-            onClick={() => handleEditSchedule(record)}
-          >
+          <Button icon={<EditOutlined />} onClick={() => handleEdit(record.id)}>
             Edit
-          </Button>
-          <Button
-            icon={<DeleteOutlined />}
-            danger
-            onClick={() => handleDeleteSchedule(record)}
-          >
-            Delete
           </Button>
         </Space>
       ),
@@ -161,7 +102,7 @@ const AdminSchedulePage = () => {
             type="primary"
             icon={<PlusOutlined />}
             size="large"
-            onClick={handleCreateSchedule}
+            onClick={handleCreate}
             className="bg-blue-600 hover:bg-blue-700"
           >
             Create New Schedule
@@ -170,13 +111,13 @@ const AdminSchedulePage = () => {
 
         <div className="mb-6">
           <Select
-            placeholder="Select Level to View Schedules"
+            placeholder="Filter by Level"
             style={{ width: 300 }}
             onChange={(value) => setSelectedLevel(value)}
             allowClear
             size="large"
           >
-            {mockLevels.map((level) => (
+            {levels.map((level) => (
               <Select.Option key={level.id} value={level.id}>
                 {level.name}
               </Select.Option>
@@ -186,12 +127,12 @@ const AdminSchedulePage = () => {
 
         <Table
           columns={columns}
-          dataSource={schedules}
+          dataSource={groups}
           rowKey="id"
           loading={loading}
           bordered
           className="shadow-md rounded-lg"
-          pagination={{ pageSize: 5 }}
+          pagination={{ pageSize: 6 }}
         />
       </Card>
     </div>

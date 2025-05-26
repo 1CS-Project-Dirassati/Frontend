@@ -1,112 +1,307 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Card, Select } from "antd";
-import { Table as AntTable } from "antd";
-const { Option } = Select;
+import React, { useState, useEffect } from "react";
+import { Card, Select, Table, InputNumber, Button, message } from "antd";
+import { useSelector } from "react-redux";
+import { jwtDecode } from "jwt-decode";
+import apiCall from "@/components/utils/apiCall";
 
-export default function Schedule() {
-  const router = useRouter();
-  const [trimester, setTrimester] = useState("Trimester 1");
-  const [week, setWeek] = useState(1);
-  const trimesters = ["Trimester 1", "Trimester 2", "Trimester 3"];
-  const weeks = Array.from({ length: 12 }, (_, i) => i + 1);
+// ========== Fetchers ==========
 
-  // Static timetable per trimester/week
-  const sessions = [
-    {
-      id: "s1",
-      day: "Monday",
-      time: "08:00",
-      subject: "Math",
-      teacher: "Dr. A",
-      room: "R1",
-      groupId: "g1",
-      trimester: "Trimester 1",
-      week: 1,
-    },
-    {
-      id: "s2",
-      day: "Tuesday",
-      time: "10:00",
-      subject: "Physics",
-      teacher: "Dr. B",
-      room: "R2",
-      groupId: "g2",
-      trimester: "Trimester 1",
-      week: 1,
-    },
-    // ... other static sessions ...
-  ].filter((s) => s.trimester === trimester && s.week === week);
+const fetchModulesAndGroups = async (token) => {
+  console.log("Fetching modules with token:", token);
+  try {
+    const res = await apiCall("get", "/api/modules/", null, { token });
+    console.log("Modules API response:", res);
+    const fetchedModules = res.data?.modules || res.modules || res.data || [];
+    const allGroups = fetchedModules
+      .flatMap((m) => m.groups || [])
+      .filter((g, i, self) => self.findIndex((x) => x.id === g.id) === i);
+    console.log("Fetched modules:", fetchedModules);
+    console.log("Fetched groups:", allGroups);
+    return { modules: fetchedModules, groups: allGroups };
+  } catch (err) {
+    console.error("Error fetching modules:", err.message, err.stack);
+    throw err;
+  }
+};
 
-  // Derive days and time slots for matrix from sessions
-  const days = Array.from(new Set(sessions.map((s) => s.day)));
-  const timeSlots = Array.from(new Set(sessions.map((s) => s.time))).sort();
-
-  // build Ant Design columns and data source for a matrix layout
-  const columns = [
-    { title: "Time", dataIndex: "time", key: "time" },
-    ...days.map((day) => ({ title: day, dataIndex: day, key: day })),
-  ];
-  const dataSource = timeSlots.map((slot) => {
-    const row = { key: slot, time: slot };
-    days.forEach((day) => {
-      const session = sessions.find((s) => s.day === day && s.time === slot);
-      row[day] = session ? (
-        <div
-          className="cursor-pointer hover:underline"
-          onClick={() =>
-            router.push(
-              `/teacher/attendance?sessionId=${session.id}&groupId=${session.groupId}`
-            )
-          }
-        >
-          <strong>{session.subject}</strong>
-          <br />
-          <span>{session.teacher}</span>
-        </div>
-      ) : (
-        <span className="text-gray-400">-</span>
-      );
+const fetchStudentsForGroup = async (groupId, token) => {
+  console.log("Fetching students for group:", groupId);
+  try {
+    const res = await apiCall("get", `/api/groups/${groupId}/students/`, null, {
+      token,
     });
-    return row;
-  });
+    console.log("Students API response:", res);
+    const students = res.data?.students || res.students || res.data || [];
+    console.log("Fetched students:", students);
+    return students;
+  } catch (err) {
+    console.error("Error fetching students:", err.message, err.stack);
+    throw err;
+  }
+};
+
+// ========== Component ==========
+
+export default function TeacherMarksPage() {
+  const token = useSelector((state) => state.auth.accessToken);
+  const [modules, setModules] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [selectedModule, setSelectedModule] = useState(null);
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [saving, setSaving] = useState({ test: false, cc: false, exam: false });
+
+  // Log token for debugging
+  console.log("Current token:", token);
+
+  useEffect(() => {
+    if (!token) {
+      console.warn("No token — skipping module fetch.");
+      message.error("Please log in to continue.");
+      return;
+    }
+
+    fetchModulesAndGroups(token)
+      .then(({ modules, groups }) => {
+        setModules(modules);
+        setGroups(groups);
+        console.log("Modules set:", modules);
+        console.log("Groups set:", groups);
+        // Auto-select first module if available
+        if (modules.length > 0) {
+          setSelectedModule(modules[0].id);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching modules:", err);
+        message.error("Failed to load modules.");
+      });
+  }, [token]);
+
+  useEffect(() => {
+    if (!selectedGroup || !token) {
+      console.log("Skipping student fetch: No group or token", {
+        selectedGroup,
+        token,
+      });
+      return;
+    }
+
+    setLoadingStudents(true);
+    fetchStudentsForGroup(selectedGroup, token)
+      .then((data) => {
+        const studentsWithMarks = data.map((s) => ({
+          ...s,
+          test: null,
+          cc: null,
+          exam: null,
+        }));
+        setStudents(studentsWithMarks);
+        console.log("Students set:", studentsWithMarks);
+      })
+      .catch((err) => {
+        console.error("Error fetching students:", err);
+        message.error("Failed to load students.");
+      })
+      .finally(() => {
+        setLoadingStudents(false);
+      });
+  }, [selectedGroup, token]);
+
+  useEffect(() => {
+    console.log(
+      "Resetting group and students due to module change:",
+      selectedModule
+    );
+    setSelectedGroup(null);
+    setStudents([]);
+  }, [selectedModule]);
+
+  const handleMarkChange = (id, field, value) => {
+    setStudents((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, [field]: value } : s))
+    );
+  };
+
+  const handleSave = async (field) => {
+    if (!selectedModule) {
+      message.error("Please select a module.");
+      return;
+    }
+
+    setSaving((prev) => ({ ...prev, [field]: true }));
+    try {
+      const payload = students
+        .filter((s) => s[field] !== null && s[field] !== undefined)
+        .map((s) => ({
+          student_id: s.id,
+          module_id: selectedModule,
+          value: s[field],
+          type: field,
+          comment: "",
+        }));
+
+      await apiCall("post", "/api/notes/", payload, { token });
+      message.success(`${field.toUpperCase()} marks saved.`);
+    } catch (err) {
+      console.error(`Error saving ${field} marks:`, err);
+      message.error(`Failed to save ${field} marks.`);
+    } finally {
+      setSaving((prev) => ({ ...prev, [field]: false }));
+    }
+  };
+
+  const handleExportCSV = () => {
+    if (!students.length) {
+      message.warn("No data to export.");
+      return;
+    }
+    const header = ["Student ID", "Name", "Test", "CC", "Exam"];
+    const rows = students.map((s) => [
+      s.id,
+      `${s.first_name || ""} ${s.last_name || s.name || ""}`,
+      s.test ?? "",
+      s.cc ?? "",
+      s.exam ?? "",
+    ]);
+    const csvContent = [header, ...rows].map((e) => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `marks_${selectedModule || "group"}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const columns = [
+    { title: "Student ID", dataIndex: "id", key: "id" },
+    {
+      title: "Name",
+      key: "name",
+      render: (_, s) => `${s.first_name || ""} ${s.last_name || s.name || ""}`,
+    },
+    {
+      title: (
+        <span>
+          Test
+          <Button
+            size="small"
+            onClick={() => handleSave("test")}
+            loading={saving.test}
+            style={{ marginLeft: 8 }}
+          >
+            Save
+          </Button>
+        </span>
+      ),
+      dataIndex: "test",
+      key: "test",
+      render: (_, r) => (
+        <InputNumber
+          min={0}
+          max={100}
+          value={r.test}
+          onChange={(v) => handleMarkChange(r.id, "test", v)}
+        />
+      ),
+    },
+    {
+      title: (
+        <span>
+          CC
+          <Button
+            size="small"
+            onClick={() => handleSave("cc")}
+            loading={saving.cc}
+            style={{ marginLeft: 8 }}
+          >
+            Save
+          </Button>
+        </span>
+      ),
+      dataIndex: "cc",
+      key: "cc",
+      render: (_, r) => (
+        <InputNumber
+          min={0}
+          max={100}
+          value={r.cc}
+          onChange={(v) => handleMarkChange(r.id, "cc", v)}
+        />
+      ),
+    },
+    {
+      title: (
+        <span>
+          Exam
+          <Button
+            size="small"
+            onClick={() => handleSave("exam")}
+            loading={saving.exam}
+            style={{ marginLeft: 8 }}
+          >
+            Save
+          </Button>
+        </span>
+      ),
+      dataIndex: "exam",
+      key: "exam",
+      render: (_, r) => (
+        <InputNumber
+          min={0}
+          max={100}
+          value={r.exam}
+          onChange={(v) => handleMarkChange(r.id, "exam", v)}
+        />
+      ),
+    },
+  ];
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Schedule</h1>
-        <div className="flex gap-2">
-          <Select
-            value={trimester}
-            onChange={setTrimester}
-            style={{ width: 200 }}
-          >
-            {trimesters.map((t) => (
-              <Option key={t} value={t}>
-                {t}
-              </Option>
-            ))}
-          </Select>
-          <Select value={week} onChange={setWeek} style={{ width: 120 }}>
-            {weeks.map((w) => (
-              <Option key={w} value={w}>{`Week ${w}`}</Option>
-            ))}
-          </Select>
-        </div>
+    <Card title="Enter Student Marks">
+      <div style={{ marginBottom: 16, display: "flex", gap: 16 }}>
+        <Select
+          placeholder="Select Module"
+          style={{ width: 240 }}
+          options={modules.map((m) => ({ label: m.name, value: m.id }))}
+          value={selectedModule}
+          onChange={(val) => setSelectedModule(val)}
+        />
+        <Select
+          placeholder="Select Group"
+          style={{ width: 240 }}
+          options={
+            selectedModule
+              ? groups
+                  .filter((g) =>
+                    modules
+                      .find((m) => m.id === selectedModule)
+                      ?.groups?.some((mg) => mg.id === g.id)
+                  )
+                  .map((g) => ({ label: g.name, value: g.id }))
+              : []
+          }
+          value={selectedGroup}
+          onChange={(val) => setSelectedGroup(val)}
+          disabled={!selectedModule}
+        />
+        <Button onClick={handleExportCSV} disabled={!students.length}>
+          Export CSV
+        </Button>
       </div>
-
-      <Card>
-        <div className="overflow-auto">
-          <AntTable
-            columns={columns}
-            dataSource={dataSource}
-            pagination={false}
-          />
-        </div>
-      </Card>
-    </div>
+      <Table
+        dataSource={students}
+        columns={columns}
+        rowKey="id"
+        loading={loadingStudents}
+        pagination={false}
+        bordered
+      />
+    </Card>
   );
 }
-// end of file

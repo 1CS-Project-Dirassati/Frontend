@@ -415,9 +415,9 @@ export default function StudentsGroups() {
   // Data Fetching and Manipulation Functions
   const getStudents = async () => {
     try {
-      const response = await apiCall("get", "/api/students", null, { token });
+      const response = await apiCall("get", "/api/students/", null, { token });
       message.success(t.success.loadData);
-      return response.data || response;
+      return response.students || response;
     } catch (err) {
       message.error(t.errors.loadDataFailed);
       throw err;
@@ -436,9 +436,9 @@ export default function StudentsGroups() {
 
   const getGroups = async () => {
     try {
-      const response = await apiCall("get", "/api/groups", null, { token });
+      const response = await apiCall("get", "/api/groups/", null, { token });
       message.success(t.success.loadData);
-      return response.data || response;
+      return response.groups || response;
     } catch (err) {
       message.error(t.errors.loadDataFailed);
       throw err;
@@ -447,9 +447,9 @@ export default function StudentsGroups() {
 
   const getLevels = async () => {
     try {
-      const response = await apiCall("get", "/api/levels", null, { token });
+      const response = await apiCall("get", "/api/levels/", null, { token });
       message.success(t.success.loadData);
-      return response.data || response;
+      return response.levels || response;
     } catch (err) {
       message.error(t.errors.loadDataFailed);
       throw err;
@@ -458,9 +458,9 @@ export default function StudentsGroups() {
 
   const getParents = async () => {
     try {
-      const response = await apiCall("get", "/api/parents", null, { token });
+      const response = await apiCall("get", "/api/parents/", null, { token });
       message.success(t.success.loadData);
-      return response.data || response;
+      return response.parents || response;
     } catch (err) {
       message.error(t.errors.loadDataFailed);
       throw err;
@@ -469,9 +469,9 @@ export default function StudentsGroups() {
 
   const getTeachers = async () => {
     try {
-      const response = await apiCall("get", "/api/teachers", null, { token });
+      const response = await apiCall("get", "/api/teachers/", null, { token });
       message.success(t.success.loadData);
-      return response.data || response;
+      return response.teachers || response;
     } catch (err) {
       message.error(t.errors.loadDataFailed);
       throw err;
@@ -480,7 +480,7 @@ export default function StudentsGroups() {
 
   const addGroup = async (groupData) => {
     try {
-      await apiCall("post", "/api/groups", groupData, { token });
+      await apiCall("post", "/api/groups/", groupData, { token });
       message.success(t.success.addGroup(groupData.name));
     } catch (err) {
       message.error(t.errors.addGroupFailed);
@@ -500,7 +500,7 @@ export default function StudentsGroups() {
 
   const addStudent = async (studentData) => {
     try {
-      await apiCall("post", "/api/students", studentData, { token });
+      await apiCall("post", "/api/students/", studentData, { token });
       message.success(t.success.addStudent);
     } catch (err) {
       message.error(t.errors.addStudentFailed);
@@ -725,7 +725,11 @@ export default function StudentsGroups() {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-    if (!newGroup.name.trim() || !newGroup.level_id) {
+    if (
+      !newGroup.name.trim() ||
+      !newGroup.level_id ||
+      isNaN(Number(newGroup.level_id))
+    ) {
       message.error(
         t.errors.required(t.groupName) + " " + t.errors.required(t.level)
       );
@@ -734,7 +738,11 @@ export default function StudentsGroups() {
     }
 
     const trimmedGroupName = newGroup.name.trim();
-    if (groups.some((g) => g.name === trimmedGroupName)) {
+    if (
+      groups.some(
+        (g) => g.name.toLowerCase() === trimmedGroupName.toLowerCase()
+      )
+    ) {
       message.error(t.errors.groupExists);
       setIsSubmitting(false);
       return;
@@ -757,22 +765,19 @@ export default function StudentsGroups() {
     const group = {
       name: trimmedGroupName,
       level_id: Number(newGroup.level_id),
-      teacher_id:
-        newGroup.teacher_id === "none" ? null : Number(newGroup.teacher_id),
+      /* teacher_id:
+        newGroup.teacher_id === "none" ? null : Number(newGroup.teacher_id), */
     };
 
+    console.log("Group payload:", group);
+
     addGroup(group)
-      .then(() => {
-        return getGroups();
-      })
-      .then((updatedGroups) => {
-        setGroups(updatedGroups);
+      .then((newGroup) => {
+        setGroups((prev) => [...prev, newGroup]);
         if (bulkSelected.length > 0) {
           return Promise.all(
             bulkSelected.map((id) =>
-              updateStudent(id, {
-                group_id: updatedGroups[updatedGroups.length - 1].id,
-              })
+              updateStudent(id, { group_id: newGroup.id })
             )
           ).then(() => getStudents());
         }
@@ -786,6 +791,7 @@ export default function StudentsGroups() {
       })
       .catch((error) => {
         console.error("Failed to add group:", error);
+        message.error(error.response?.data?.message || t.errors.addGroupFailed);
       })
       .finally(() => {
         setIsSubmitting(false);

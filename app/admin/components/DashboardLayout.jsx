@@ -78,16 +78,16 @@ const DashboardLayout = ({ children }) => {
   const menuItems = [
     { key: "home", icon: <HomeOutlined />, label: "Home", href: "/admin" },
     {
-      key: "unapproved",
-      icon: <ExclamationCircleOutlined />,
-      label: "Unapproved Students",
-      href: "/admin/unapproved",
-    },
-    {
       key: "students",
       icon: <TeamOutlined />,
       label: "Students",
       href: "/admin/students",
+    },
+    {
+      key: "unapproved",
+      icon: <ExclamationCircleOutlined />,
+      label: "Unapproved Students",
+      href: "/admin/unapproved",
     },
     {
       key: "parents",
@@ -112,6 +112,12 @@ const DashboardLayout = ({ children }) => {
       icon: <BookOutlined />,
       label: "Modules",
       href: "/admin/modules",
+    },
+    {
+      key: "schedule manager",
+      icon: <BookOutlined />,
+      label: "schedule manager",
+      href: "/admin/schedule",
     },
     {
       key: "payments",

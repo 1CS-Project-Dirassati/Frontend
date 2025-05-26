@@ -2,53 +2,101 @@
 
 import React, { useState, useEffect } from "react";
 import { Card, Select, Table, InputNumber, Button, message } from "antd";
-import {
-  mockGroups,
-  getStudentsForGroup,
-  mockModules,
-  getModulesForTeacher,
-} from "./mockData";
+import { useSelector } from "react-redux";
+import { jwtDecode } from "jwt-decode";
+import apiCall from "@/components/utils/apiCall";
+
+// ========== Fetchers ==========
+
+const fetchModulesAndGroups = async (teacherId, token) => {
+  console.log("Fetching modules for teacher:", teacherId);
+  const res = await apiCall(
+    "get",
+    `/api/modules/?teacher_id=${teacherId}`,
+    null,
+    { token }
+  );
+
+  console.log("Modules API response:", res);
+
+  const fetchedModules = res.modules || res.data || [];
+  const allGroups = fetchedModules
+    .flatMap((m) => m.groups || [])
+    .filter((g, i, self) => self.findIndex((x) => x.id === g.id) === i);
+
+  return { modules: fetchedModules, groups: allGroups };
+};
+
+const fetchStudentsForGroup = async (groupId, token) => {
+  console.log("Fetching students for group:", groupId);
+  const res = await apiCall("get", `/api/groups/${groupId}/students/`, null, {
+    token,
+  });
+
+  console.log("Students API response:", res);
+
+  return res.students || res.data || [];
+};
+
+// ========== Component ==========
 
 export default function TeacherMarksPage() {
+  const token = useSelector((state) => state.auth.accessToken);
+  const [modules, setModules] = useState([]);
   const [groups, setGroups] = useState([]);
-  const [selectedGroup, setSelectedGroup] = useState(null);
   const [students, setStudents] = useState([]);
+  const [selectedModule, setSelectedModule] = useState(null);
+  const [selectedGroup, setSelectedGroup] = useState(null);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [saving, setSaving] = useState({ test: false, cc: false, exam: false });
-  const [modules, setModules] = useState([]);
-  const [selectedModule, setSelectedModule] = useState(null);
+
+  const teacherId = token ? jwtDecode(token)?.teacher_id : null;
+
+  console.log("Decoded token teacherId:", teacherId);
+  console.log("Current token:", token);
 
   useEffect(() => {
-    // Load groups the teacher is responsible for
-    setGroups(mockGroups);
-  }, []);
-
-  useEffect(() => {
-    if (selectedGroup) {
-      setLoadingStudents(true);
-      getStudentsForGroup(selectedGroup)
-        .then((data) => {
-          setStudents(
-            data.map((s) => ({ ...s, test: null, cc: null, exam: null }))
-          );
-        })
-        .catch(() => message.error("Failed to load students."))
-        .finally(() => setLoadingStudents(false));
-    } else {
-      setStudents([]);
+    if (!token || !teacherId) {
+      console.warn("No token or teacher ID — skipping module fetch.");
+      return;
     }
-  }, [selectedGroup]);
+
+    fetchModulesAndGroups(teacherId, token)
+      .then(({ modules, groups }) => {
+        setModules(modules);
+        setGroups(groups);
+      })
+      .catch((err) => {
+        console.error("Error fetching modules:", err);
+        message.error("Failed to load modules.");
+      });
+  }, [token, teacherId]);
 
   useEffect(() => {
-    // Load modules the teacher is responsible for
-    getModulesForTeacher()
-      .then((data) => setModules(data))
-      .catch(() => message.error("Failed to load modules."));
-  }, []);
+    if (!selectedGroup || !token) return;
 
-  // Reset group and students when module changes
+    setLoadingStudents(true);
+    fetchStudentsForGroup(selectedGroup, token)
+      .then((data) => {
+        setStudents(
+          data.map((s) => ({
+            ...s,
+            test: null,
+            cc: null,
+            exam: null,
+          }))
+        );
+      })
+      .catch((err) => {
+        console.error("Error fetching students:", err);
+        message.error("Failed to load students.");
+      })
+      .finally(() => setLoadingStudents(false));
+  }, [selectedGroup, token]);
+
   useEffect(() => {
     setSelectedGroup(null);
+    setStudents([]);
   }, [selectedModule]);
 
   const handleMarkChange = (id, field, value) => {
@@ -58,12 +106,22 @@ export default function TeacherMarksPage() {
   };
 
   const handleSave = async (field) => {
+    if (!selectedModule) return;
+
     setSaving((prev) => ({ ...prev, [field]: true }));
     try {
-      const payload = students.map((s) => ({ id: s.id, [field]: s[field] }));
-      // Replace with real API call
-      console.log(`Saving ${field} marks for group`, selectedGroup, payload);
-      await new Promise((res) => setTimeout(res, 500));
+      const payload = students
+        .filter((s) => s[field] !== null && s[field] !== undefined)
+        .map((s) => ({
+          student_id: s.id,
+          module_id: selectedModule,
+          value: s[field],
+          type: field,
+          comment: "",
+        }));
+
+      await apiCall("post", "/api/notes/", payload, { token });
+
       message.success(`${field.toUpperCase()} marks saved.`);
     } catch {
       message.error(`Failed to save ${field} marks.`);
@@ -80,7 +138,7 @@ export default function TeacherMarksPage() {
     const header = ["Student ID", "Name", "Test", "CC", "Exam"];
     const rows = students.map((s) => [
       s.id,
-      s.name,
+      `${s.first_name || ""} ${s.last_name || s.name || ""}`,
       s.test ?? "",
       s.cc ?? "",
       s.exam ?? "",
@@ -98,7 +156,11 @@ export default function TeacherMarksPage() {
 
   const columns = [
     { title: "Student ID", dataIndex: "id", key: "id" },
-    { title: "Name", dataIndex: "name", key: "name" },
+    {
+      title: "Name",
+      key: "name",
+      render: (_, s) => `${s.first_name || ""} ${s.last_name || s.name || ""}`,
+    },
     {
       title: (
         <span>
@@ -188,10 +250,12 @@ export default function TeacherMarksPage() {
           style={{ width: 240 }}
           options={
             selectedModule
-              ? modules
-                  .find((m) => m.id === selectedModule)
-                  .groupIds.map((gid) => mockGroups.find((g) => g.id === gid))
-                  .filter(Boolean)
+              ? groups
+                  .filter((g) =>
+                    modules
+                      .find((m) => m.id === selectedModule)
+                      ?.groups?.some((mg) => mg.id === g.id)
+                  )
                   .map((g) => ({ label: g.name, value: g.id }))
               : []
           }

@@ -82,22 +82,16 @@ const DashboardLayout = ({ children }) => {
       href: "/teacher/unapproved",
     },
     {
-      key: "chat-students",
-      icon: <TeamOutlined />,
-      label: "Chat with Students",
-      href: "/teacher/unapproved",
-    },
-    {
-      key: "schedule",
+      key: "schedule & attendance",
       icon: <CalendarOutlined />,
-      label: "Sons schedule",
+      label: "schedule & attendance",
       href: "/teacher/schedule",
     },
     {
-      key: "attendance",
+      key: "marks",
       icon: <Notebook />,
       label: "Add Marks",
-      href: "/teacher/attendance",
+      href: "/teacher/marks",
     },
     {
       key: "profile",
