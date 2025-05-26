@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { callApi } from '../../../lib/utils';
+import { RollerCoaster } from "lucide-react";
 
 const initialState = {
   userProfile: {
@@ -14,6 +15,7 @@ const initialState = {
     profile_picture: "",
     created_at: "",
     updated_at: "",
+    role:""
   },
 };
 

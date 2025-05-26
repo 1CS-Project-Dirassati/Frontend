@@ -6,27 +6,6 @@ import { useSelector } from "react-redux";
 import { jwtDecode } from "jwt-decode";
 import apiCall from "@/components/utils/apiCall";
 
-// ========== Fetchers ==========
-
-const fetchModulesAndGroups = async (teacherId, token) => {
-  console.log("Fetching modules for teacher:", teacherId);
-  const res = await apiCall(
-    "get",
-    `/api/modules/?teacher_id=${teacherId}`,
-    null,
-    { token }
-  );
-
-  console.log("Modules API response:", res);
-
-  const fetchedModules = res.modules || res.data || [];
-  const allGroups = fetchedModules
-    .flatMap((m) => m.groups || [])
-    .filter((g, i, self) => self.findIndex((x) => x.id === g.id) === i);
-
-  return { modules: fetchedModules, groups: allGroups };
-};
-
 const fetchStudentsForGroup = async (groupId, token) => {
   console.log("Fetching students for group:", groupId);
   const res = await apiCall("get", `/api/groups/${groupId}/students/`, null, {
@@ -49,28 +28,9 @@ export default function TeacherMarksPage() {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [saving, setSaving] = useState({ test: false, cc: false, exam: false });
+  const teacherId = useSelector((state)=>state.userinfo.userProfile.id) 
 
-  const teacherId = token ? jwtDecode(token)?.teacher_id : null;
 
-  console.log("Decoded token teacherId:", teacherId);
-  console.log("Current token:", token);
-
-  useEffect(() => {
-    if (!token || !teacherId) {
-      console.warn("No token or teacher ID — skipping module fetch.");
-      return;
-    }
-
-    fetchModulesAndGroups(teacherId, token)
-      .then(({ modules, groups }) => {
-        setModules(modules);
-        setGroups(groups);
-      })
-      .catch((err) => {
-        console.error("Error fetching modules:", err);
-        message.error("Failed to load modules.");
-      });
-  }, [token, teacherId]);
 
   useEffect(() => {
     if (!selectedGroup || !token) return;
@@ -234,6 +194,28 @@ export default function TeacherMarksPage() {
       ),
     },
   ];
+
+  // Add static data for visualization
+  useEffect(() => {
+    // Static modules
+    setModules([
+      { id: "m1", name: "Mathematics", groups: [{ id: "g1", name: "Group A" }] },
+      { id: "m2", name: "Physics", groups: [{ id: "g2", name: "Group B" }] },
+    ]);
+
+    // Static groups
+    setGroups([
+      { id: "g1", name: "Group A" },
+      { id: "g2", name: "Group B" },
+    ]);
+
+    // Static students
+    setStudents([
+      { id: "s1", first_name: "John", last_name: "Doe", test: 85, cc: 90, exam: 88 },
+      { id: "s2", first_name: "Jane", last_name: "Smith", test: 78, cc: 82, exam: 80 },
+      { id: "s3", first_name: "Alice", last_name: "Johnson", test: 92, cc: 95, exam: 94 },
+    ]);
+  }, []);
 
   return (
     <Card title="Enter Student Marks">

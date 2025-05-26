@@ -140,7 +140,7 @@ function TeacherDashboard({ initialTimeRange }) {
         token: authToken,
       });
 
-         dispatch(setUserProfile(response.teacher))
+      dispatch(setUserProfile({ ...response.teacher, role: "teacher" }));
       
         setStatsData(stats);
       } catch (error) {

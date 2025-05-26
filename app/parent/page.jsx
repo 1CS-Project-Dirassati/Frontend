@@ -146,7 +146,7 @@ export default function Home() {
         token: authToken,
       });
 
-         dispatch(setUserProfile(response.parent))
+       dispatch(setUserProfile({ ...response.parent, role: "parent" }));
       
         const stats = [
           {

@@ -90,6 +90,12 @@ const DashboardLayout = ({ children }) => {
     },
     {
       key: "attendance",
+      icon: <Group />,
+      label: "Attendance",
+      href: "/teacher/marks",
+    },
+        {
+      key: "attendance",
       icon: <Notebook />,
       label: "Add Marks",
       href: "/teacher/attendance",

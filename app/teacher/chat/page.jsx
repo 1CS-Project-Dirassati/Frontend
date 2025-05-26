@@ -25,7 +25,7 @@ export default function ParentTeacherChat({ user }) {
 
   // Redux selector for token
   const token = useSelector((state) => state.auth.accessToken);
- const parentID = useSelector((state)=>state.userinfo.userProfile.id) 
+ const TeacherID = useSelector((state)=>state.userinfo.userProfile.id) 
 
   // Hardcoded students
   const students = [
@@ -67,7 +67,7 @@ export default function ParentTeacherChat({ user }) {
         const teacherChats = response.chats.map((chat) => ({
           id: chat.id,
           teacher_id: chat.teacher_id,
-          name: `${chat.teacher_name}`, // Replace with actual teacher name if available
+          name: `${chat.parent_name}`, // Replace with actual teacher name if available
           subject: "Unknown", // Replace with actual subject if available
         }));
         setTeachers(teacherChats);
@@ -90,7 +90,7 @@ export default function ParentTeacherChat({ user }) {
      const result = await apiCall("post", `/api/messages/`, {
         chat_id: selectedTeacher.id,
         content: messageInput,
-        sender_id: parentID,
+        sender_id: TeacherID,
         sender_role: "parent",
       }, {
         token,
@@ -205,7 +205,7 @@ useEffect(() => {
             transition={{ duration: 0.5 }}
             className="text-4xl font-bold text-slate-800"
           >
-            Discussion avec les enseignants
+            Discussion avec les parents
           </motion.h1>
           {/* <Select value={selectedChild} onValueChange={setSelectedChild}>
             <SelectTrigger className="w-48 border-slate-300 rounded-lg shadow-sm">
@@ -232,7 +232,7 @@ useEffect(() => {
               <CardHeader>
                 <CardTitle className="text-slate-800 flex items-center gap-2">
                   <MessageSquare className="w-6 h-6 text-slate-600" />
-                  Enseignants
+                  parents
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -308,23 +308,23 @@ useEffect(() => {
                           stiffness: 200,
                         }}
                         className={`flex ${
-                          msg.sender === "parent"
+                          msg.sender === "teacher"
                             ? "justify-end"
                             : "justify-start"
                         } mb-4 items-end`}
                       >
                         <div className="flex items-end gap-2">
-                          {msg.sender === "teacher" && (
+                          {msg.sender === "parent" && (
                             <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-800 font-semibold">
                               {getInitials(
                                 teachers.find((t) => t.id === selectedTeacher.id)
-                                  ?.name || "T"
+                                  ?.name || "P"
                               )}
                             </div>
                           )}
                           <div
                             className={`relative max-w-[70%] p-3 rounded-lg shadow-sm ${
-                              msg.sender === "parent"
+                              msg.sender === "teacher"
                                 ? "bg-[#0771CB] text-white"
                                 : "bg-slate-200 text-slate-800"
                             }`}
@@ -332,7 +332,7 @@ useEffect(() => {
                             {/* Tail for message bubble */}
                             <div
                               className={`absolute bottom-0 w-0 h-0 border-t-8 border-t-transparent ${
-                                msg.sender === "parent"
+                                msg.sender === "teacher"
                                   ? "right-[-8px] border-l-8 border-l-[#0771CB]"
                                   : "left-[-8px] border-r-8 border-r-slate-200"
                               }`}
@@ -342,9 +342,9 @@ useEffect(() => {
                               {msg.timestamp}
                             </p>
                           </div>
-                          {msg.sender === "parent" && (
+                          {msg.sender === "teacher" && (
                             <div className="w-8 h-8 rounded-full bg-[#0771CB] flex items-center justify-center text-white font-semibold">
-                              {getInitials("Parent")}
+                              {getInitials("Teacher")}
                             </div>
                           )}
                         </div>
