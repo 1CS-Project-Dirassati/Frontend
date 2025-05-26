@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { useState, useEffect } from "react";
 import {
   Card as AntCard,
@@ -19,9 +19,11 @@ import {
   EyeOutlined,
   EyeInvisibleOutlined,
 } from "@ant-design/icons";
+import apiCall from "@/components/utils/apiCall";
 import dynamic from "next/dynamic";
 import { Card as ShadcnCard } from "@/components/ui/card";
 import styled from "styled-components";
+import { useSelector } from "react-redux";
 
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
@@ -110,14 +112,76 @@ const FeedbackList = styled.div`
 `;
 
 export default function ParentDashboard({ user }) {
-  const [language, setLanguage] = useState("ar"); // Default: Arabic
+  const [language, setLanguage] = useState("ar");
+  const [childrendata, setchildrendata] = useState([]);
   const [children, setChildren] = useState([]);
   const [selectedChild, setSelectedChild] = useState(null);
   const [timeRange, setTimeRange] = useState("monthly");
   const [isLoading, setIsLoading] = useState(true);
   const [isSidePanelVisible, setIsSidePanelVisible] = useState(true);
+  const [avrg, setAvrg] = useState(0);
+  const [absencesData, setabsencesData] = useState(0);
 
-  // Hardcoded data
+  const authToken = useSelector((state) => state.auth.accessToken);
+  const parentinfo = useSelector((state) => state.userinfo.userProfile);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const result = await apiCall(
+          "get",
+          `/api/students/?parent_id=${parentinfo.id}&page=1&per_page=10`,
+          null,
+          { token: authToken }
+        );
+        const mappedChildren = result.students.map((child, index) => ({
+          ...child,
+          staticId: index === 0 ? "s1" : index === 1 ? "s2" : `s${index + 1}`,
+        }));
+        setchildrendata(mappedChildren);
+        console.log(mappedChildren)
+        setChildren(mappedChildren.filter((child) => child.is_approved));
+        if (mappedChildren.length > 0 && !selectedChild) {
+          setSelectedChild(mappedChildren[0].id);
+          handleChildSelection(mappedChildren[0].id);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (parentinfo.id && authToken) {
+      fetchData();
+    }
+  }, [parentinfo.id, authToken]);
+
+  const handleChildSelection = async (id) => {
+    try {
+      const resultNotes = await apiCall(
+        "get",
+        `/api/notes/?student_id=${id}&page=1&per_page=10`,
+        null,
+        { token: authToken }
+      );
+      const total = resultNotes.notes.reduce((sum, note) => sum + note.value, 0);
+      const average = (total / (resultNotes.notes.length || 1)).toFixed(2);
+      setAvrg(average);
+
+      const resultAbsences = await apiCall(
+        "get",
+        `/api/absences/?student_id=${id}&page=1&per_page=10`,
+        null,
+        { token: authToken }
+      );
+      setabsencesData(resultAbsences.absences.length);
+    } catch (error) {
+      console.error("Error handling child selection:", error);
+    }
+  };
+
   const students = [
     {
       id: "s1",
@@ -215,8 +279,7 @@ export default function ParentDashboard({ user }) {
     s1: {
       "2025-05-01": {
         teacher_id: 1,
-        comment:
-          "Amina is performing well but needs to focus on participation.",
+        comment: "Amina is performing well but needs to focus on participation.",
       },
       "2025-05-03": {
         teacher_id: 2,
@@ -235,7 +298,6 @@ export default function ParentDashboard({ user }) {
     },
   };
 
-  // Translations
   const translations = {
     ar: {
       unauthorized: "غير مصرح لك بالوصول إلى هذه الصفحة",
@@ -327,8 +389,7 @@ export default function ParentDashboard({ user }) {
       classesMissedInfo: "Nombre de cours manqués par l’élève",
       studentInsightsInfo: "Analyse des notes et de la présence",
       performanceTrendsInfo: "Historique de présence et tendances des notes",
-      feedbackAndRankInfo:
-        "Commentaires des enseignants et classement de l’élève",
+      feedbackAndRankInfo: "Commentaires des enseignants et classement de l’élève",
       exportSuccess: "Exportation CSV réussie !",
       switchLanguage: "العربية",
       showAssignments: "Afficher les devoirs",
@@ -338,40 +399,15 @@ export default function ParentDashboard({ user }) {
 
   const t = translations[language];
 
-  // Load static children
-  useEffect(() => {
-    if (user && user.role !== "parent") {
-      alert(t.unauthorized);
-      setIsLoading(false);
-      return;
-    }
+  const childAttendance = selectedChild ? attendance[childrendata.find((child) => child.id === selectedChild)?.staticId] || {} : {};
+  const childMarks = selectedChild ? marks[childrendata.find((child) => child.id === selectedChild)?.staticId] || {} : {};
+  const childFeedback = selectedChild ? feedback[childrendata.find((child) => child.id === selectedChild)?.staticId] || {} : {};
 
-    // Set static children (Amina, Youssef)
-    setChildren(students.filter((s) => s.is_active));
-    if (students.length > 0 && !selectedChild) {
-      setSelectedChild(students[0].id);
-    }
-    setIsLoading(false);
-  }, [user, selectedChild, t]);
-
-  // Get data for selected child
-  const childAttendance = selectedChild ? attendance[selectedChild] || {} : {};
-  const childMarks = selectedChild ? marks[selectedChild] || {} : {};
-  const childFeedback = selectedChild ? feedback[selectedChild] || {} : {};
-
-  // Calculate statistics
   const statsData = [
     {
       name: t.marksAverage,
-      value: childMarks
-        ? (
-            Object.values(childMarks)
-              .flat()
-              .reduce((sum, m) => sum + (m.score / m.max_score) * 100, 0) /
-            (Object.values(childMarks).flat().length || 1)
-          ).toFixed(1)
-        : 0,
-      suffix: "%",
+      value: avrg,
+      suffix: "",
       color: "#1890ff",
       info: t.marksAverageInfo,
     },
@@ -379,9 +415,7 @@ export default function ParentDashboard({ user }) {
       name: t.attendanceRate,
       value: childAttendance
         ? (
-            (Object.values(childAttendance).filter(
-              (a) => a.status === "present"
-            ).length /
+            (Object.values(childAttendance).filter((a) => a.status === "present").length /
               (Object.values(childAttendance).length || 1)) *
             100
           ).toFixed(1)
@@ -393,24 +427,19 @@ export default function ParentDashboard({ user }) {
     {
       name: t.classesAttended,
       value: childAttendance
-        ? Object.values(childAttendance).filter((a) => a.status === "present")
-            .length
+        ? Object.values(childAttendance).filter((a) => a.status === "present").length
         : 0,
       color: "#fa8c16",
       info: t.classesAttendedInfo,
     },
     {
       name: t.classesMissed,
-      value: childAttendance
-        ? Object.values(childAttendance).filter((a) => a.status === "absent")
-            .length
-        : 0,
+      value: absencesData,
       color: "#f5222d",
       info: t.classesMissedInfo,
     },
   ];
 
-  // Marks per subject (Bar Chart)
   const barOptions = {
     chart: {
       id: "marks-distribution",
@@ -454,7 +483,6 @@ export default function ParentDashboard({ user }) {
     },
   ];
 
-  // Attendance breakdown (Donut Chart)
   const donutOptions = {
     chart: {
       id: "attendance-breakdown",
@@ -482,19 +510,16 @@ export default function ParentDashboard({ user }) {
   };
   const donutSeries = [
     childAttendance
-      ? Object.values(childAttendance).filter((a) => a.status === "present")
-          .length
+      ? Object.values(childAttendance).filter((a) => a.status === "present").length
       : 0,
     childAttendance
       ? Object.values(childAttendance).filter((a) => a.status === "late").length
       : 0,
     childAttendance
-      ? Object.values(childAttendance).filter((a) => a.status === "absent")
-          .length
+      ? Object.values(childAttendance).filter((a) => a.status === "absent").length
       : 0,
   ];
 
-  // Attendance history (Heatmap)
   const heatmapOptions = {
     chart: {
       id: "attendance-history",
@@ -543,7 +568,6 @@ export default function ParentDashboard({ user }) {
     },
   ];
 
-  // Marks trend (Line Chart)
   const lineOptions = {
     chart: {
       id: "marks-trend",
@@ -576,7 +600,6 @@ export default function ParentDashboard({ user }) {
         : [80, 82, 85, 87, 90],
   }));
 
-  // Class rank (Radial Bar)
   const radialOptions = {
     chart: {
       id: "class-rank",
@@ -614,9 +637,8 @@ export default function ParentDashboard({ user }) {
     stroke: { dashArray: 4 },
     labels: [t.classRank],
   };
-  const radialSeries = [85]; // Static: 85th percentile
+  const radialSeries = [85];
 
-  // Export CSV
   const exportCSV = () => {
     const headers = [
       t.language === "ar" ? "التاريخ" : "Date",
@@ -648,12 +670,10 @@ export default function ParentDashboard({ user }) {
     alert(t.exportSuccess);
   };
 
-  // Toggle language
   const toggleLanguage = () => {
     setLanguage(language === "ar" ? "fr" : "ar");
   };
 
-  // Toggle side panel visibility
   const toggleSidePanel = () => {
     setIsSidePanelVisible(!isSidePanelVisible);
   };
@@ -676,7 +696,10 @@ export default function ParentDashboard({ user }) {
           <Space size="middle">
             <Select
               value={selectedChild}
-              onChange={setSelectedChild}
+              onChange={(childId) => {
+                setSelectedChild(childId);
+                handleChildSelection(childId);
+              }}
               style={{ width: 200 }}
               placeholder={t.selectStudent}
             >
@@ -686,40 +709,17 @@ export default function ParentDashboard({ user }) {
                 </Select.Option>
               ))}
             </Select>
-            <Select
-              value={timeRange}
-              onChange={setTimeRange}
-              style={{ width: 120 }}
-              options={[
-                { value: "daily", label: t.daily },
-                { value: "weekly", label: t.weekly },
-                { value: "monthly", label: t.monthly },
-              ]}
-            />
-            <Button icon={<FilterOutlined />}>{t.filters}</Button>
-            <Button
-              type="primary"
-              icon={<DownloadOutlined />}
-              onClick={exportCSV}
-            >
-              {t.export}
-            </Button>
+           
+            
+            
             <Button icon={<GlobalOutlined />} onClick={toggleLanguage}>
               {t.switchLanguage}
             </Button>
-            <Button
-              icon={
-                isSidePanelVisible ? <EyeInvisibleOutlined /> : <EyeOutlined />
-              }
-              onClick={toggleSidePanel}
-            >
-              {isSidePanelVisible ? t.hideAssignments : t.showAssignments}
-            </Button>
+           
           </Space>
         </Col>
       </Row>
 
-      {/* Hero Section: Key Metrics */}
       <StyledSection>
         <StyledSubHeader>
           {t.keyMetrics}
@@ -765,7 +765,6 @@ export default function ParentDashboard({ user }) {
         </HeroChart>
       </StyledSection>
 
-      {/* Masonry Grid: Marks and Attendance */}
       <StyledSection>
         <StyledSubHeader>
           {t.studentInsights}
@@ -799,7 +798,6 @@ export default function ParentDashboard({ user }) {
         </MasonryGrid>
       </StyledSection>
 
-      {/* Tabbed Section: Attendance History and Marks Trend */}
       <StyledSection>
         <StyledSubHeader>
           {t.performanceTrends}
@@ -856,7 +854,6 @@ export default function ParentDashboard({ user }) {
         />
       </StyledSection>
 
-      {/* Circular Cluster: Feedback and Class Rank */}
       <StyledSection>
         <StyledSubHeader>
           {t.feedbackAndRank}
@@ -903,18 +900,6 @@ export default function ParentDashboard({ user }) {
           </CircularCard>
         </CircularCluster>
       </StyledSection>
-
-      {/* Side Panel: Upcoming Assignments */}
-      {/* <SidePanel visible={isSidePanelVisible}>
-        <h3 style={{ fontSize: "1.1rem", marginBottom: 12 }}>
-          {t.upcomingAssignments}
-        </h3>
-        <div style={{ padding: 8 }}>
-          <p style={{ color: "#888", textAlign: "center" }}>
-            {t.noAssignments}
-          </p>
-        </div>
-      </SidePanel> */}
     </div>
   );
 }
