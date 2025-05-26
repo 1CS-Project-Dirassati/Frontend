@@ -17,7 +17,7 @@ import { useSelector } from "react-redux";
 import apiCall from "@/components/utils/apiCall";
 export default function ParentTeacherChat({ user }) {
   const [selectedChild, setSelectedChild] = useState("s1"); // Default: Amina
-  const [selectedTeacher, setSelectedTeacher] = useState("1"); // Default: Fatima Haddad
+  const [selectedTeacher, setSelectedTeacher] = useState({}); // Default: Fatima Haddad
   const [isLoading, setIsLoading] = useState(true);
   const [messageInput, setMessageInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -25,6 +25,7 @@ export default function ParentTeacherChat({ user }) {
 
   // Redux selector for token
   const token = useSelector((state) => state.auth.accessToken);
+ const parentID = useSelector((state)=>state.userinfo.userProfile.id) 
 
   // Hardcoded students
   const students = [
@@ -35,146 +36,8 @@ export default function ParentTeacherChat({ user }) {
   // Hardcoded teachers
   const [teachers, setTeachers] = useState([]);
 
-  // Initial messages (hardcoded)
-  const initialMessages = {
-    s1: {
-      1: [
-        {
-          sender: "parent",
-          text: "Bonjour, comment Amina se débrouille-t-elle en arabe ?",
-          timestamp: "2025-05-04 10:00",
-        },
-        {
-          sender: "teacher",
-          text: "Amina va bien, mais elle peut améliorer ses compétences en écriture.",
-          timestamp: "2025-05-04 10:05",
-        },
-        {
-          sender: "parent",
-          text: "Merci, y a-t-il des exercices supplémentaires qu’elle pourrait faire ?",
-          timestamp: "2025-05-04 10:10",
-        },
-        {
-          sender: "teacher",
-          text: "Bien sûr, je vous enverrai quelques exercices.",
-          timestamp: "2025-05-04 10:15",
-        },
-      ],
-      2: [
-        {
-          sender: "parent",
-          text: "Pouvons-nous discuter des progrès d’Amina en mathématiques ?",
-          timestamp: "2025-05-04 11:00",
-        },
-        {
-          sender: "teacher",
-          text: "Amina excelle en calcul, mais doit se concentrer sur la géométrie.",
-          timestamp: "2025-05-04 11:05",
-        },
-      ],
-      3: [
-        {
-          sender: "parent",
-          text: "Comment va Amina en français ?",
-          timestamp: "2025-05-04 12:00",
-        },
-        {
-          sender: "teacher",
-          text: "Elle progresse bien, je lui conseille de lire davantage en français.",
-          timestamp: "2025-05-04 12:10",
-        },
-      ],
-      4: [
-        {
-          sender: "parent",
-          text: "Des remarques sur les performances d’Amina en sciences ?",
-          timestamp: "2025-05-04 13:00",
-        },
-        {
-          sender: "teacher",
-          text: "Amina est très active dans les travaux pratiques !",
-          timestamp: "2025-05-04 13:05",
-        },
-      ],
-      5: [
-        {
-          sender: "parent",
-          text: "Comment Amina se débrouille-t-elle en anglais ?",
-          timestamp: "2025-05-04 14:00",
-        },
-        {
-          sender: "teacher",
-          text: "Elle est excellente en conversation, mais peut améliorer la grammaire.",
-          timestamp: "2025-05-04 14:05",
-        },
-      ],
-    },
-    s2: {
-      1: [
-        {
-          sender: "parent",
-          text: "Bonjour, comment Youssef s’en sort-il en arabe ?",
-          timestamp: "2025-05-04 10:30",
-        },
-        {
-          sender: "teacher",
-          text: "Youssef doit améliorer sa lecture, mais il est bon à l’oral.",
-          timestamp: "2025-05-04 10:35",
-        },
-      ],
-      2: [
-        {
-          sender: "parent",
-          text: "Pouvons-nous parler des notes de Youssef en mathématiques ?",
-          timestamp: "2025-05-04 11:30",
-        },
-        {
-          sender: "teacher",
-          text: "Youssef est fort en algèbre, mais doit pratiquer les statistiques.",
-          timestamp: "2025-05-04 11:35",
-        },
-      ],
-      3: [
-        {
-          sender: "parent",
-          text: "Comment Youssef va-t-il en français ?",
-          timestamp: "2025-05-04 12:30",
-        },
-        {
-          sender: "teacher",
-          text: "Il s’améliore, mais a besoin de plus de pratique.",
-          timestamp: "2025-05-04 12:35",
-        },
-      ],
-      4: [
-        {
-          sender: "parent",
-          text: "Pouvons-nous discuter des progrès de Youssef en sciences ?",
-          timestamp: "2025-05-04 13:30",
-        },
-        {
-          sender: "teacher",
-          text: "Youssef est très intéressé par les expériences scientifiques !",
-          timestamp: "2025-05-04 13:35",
-        },
-      ],
-      5: [
-        {
-          sender: "parent",
-          text: "Comment Youssef s’en sort-il en anglais ?",
-          timestamp: "2025-05-04 14:30",
-        },
-        {
-          sender: "teacher",
-          text: "Il est bon en écriture, mais doit améliorer sa prononciation.",
-          timestamp: "2025-05-04 14:35",
-        },
-      ],
-    },
-  };
-
-  // State for messages
-  const [messages, setMessages] = useState(initialMessages);
+  // Remove static messages and initialize messages as an empty array
+  const [messages, setMessages] = useState([]);
 
   // Scroll to bottom of chat when messages change
   useEffect(() => {
@@ -219,9 +82,26 @@ export default function ParentTeacherChat({ user }) {
   }, []);
 
   // Send message
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!messageInput.trim()) return;
+    
 
+    try{
+     const result = await apiCall("post", `/api/messages/`, {
+        chat_id: selectedTeacher.id,
+        content: messageInput,
+        sender_id: parentID,
+        sender_role: "parent",
+      }, {
+        token,
+      });
+
+      handleChatMessages(selectedTeacher.id);
+
+    }
+    catch (error) {
+
+    }
     const newMessage = {
       sender: "parent",
       text: messageInput,
@@ -231,39 +111,27 @@ export default function ParentTeacherChat({ user }) {
       }),
     };
 
-    setMessages((prev) => ({
+    setMessages((prev) => [
       ...prev,
-      [selectedChild]: {
-        ...prev[selectedChild],
-        [selectedTeacher]: [
-          ...(prev[selectedChild][selectedTeacher] || []),
-          newMessage,
-        ],
-      },
-    }));
+      newMessage,
+    ]);
 
     setMessageInput("");
     setIsTyping(true);
 
     // Mock teacher response (for demo)
     setTimeout(() => {
-      setMessages((prev) => ({
+      setMessages((prev) => [
         ...prev,
-        [selectedChild]: {
-          ...prev[selectedChild],
-          [selectedTeacher]: [
-            ...(prev[selectedChild][selectedTeacher] || []),
-            {
-              sender: "teacher",
-              text: "Merci pour votre message, je vais vérifier et vous répondre bientôt.",
-              timestamp: new Date().toLocaleString("fr-FR", {
-                dateStyle: "short",
-                timeStyle: "short",
-              }),
-            },
-          ],
+        {
+          sender: "teacher",
+          text: "Merci pour votre message, je vais vérifier et vous répondre bientôt.",
+          timestamp: new Date().toLocaleString("fr-FR", {
+            dateStyle: "short",
+            timeStyle: "short",
+          }),
         },
-      }));
+      ]);
       setIsTyping(false);
     }, 1500);
   };
@@ -276,7 +144,7 @@ export default function ParentTeacherChat({ user }) {
   };
 
   // Get current messages
-  const currentMessages = messages[selectedChild]?.[selectedTeacher] || [];
+  const currentMessages = messages || [];
 
   // Get initials for avatars
   const getInitials = (name) => {
@@ -286,6 +154,58 @@ export default function ParentTeacherChat({ user }) {
       .join("")
       .toUpperCase();
   };
+
+  // Debugging logs
+  useEffect(() => {
+    console.log("Selected Teacher:", selectedTeacher);
+    console.log("Messages:", messages);
+    console.log("Current Messages:", currentMessages);
+  }, [selectedTeacher, messages, currentMessages]);
+
+
+  // Update handleChatMessages to fetch and sort messages by created_at
+  const handleChatMessages = async (teacherId) => {
+    try {
+      const result = await apiCall(
+        "get",
+        `/api/messages/?chat_id=${teacherId}&page=1&per_page=20`,
+        null,
+        {
+          token,
+        }
+      );
+
+      // Transform the API response to match the messages format
+      const transformedMessages = result.messages.map((msg) => ({
+        sender: msg.sender_role === "parent" ? "parent" : "teacher",
+        text: msg.content,
+        timestamp: new Date(msg.created_at).toLocaleString("fr-FR", {
+          dateStyle: "short",
+          timeStyle: "short",
+        }),
+        createdAt: new Date(msg.created_at),
+      }));
+
+      // Sort messages by created_at
+      const sortedMessages = transformedMessages.sort((a, b) => a.createdAt - b.createdAt);
+
+      // Update the messages state
+      setMessages(sortedMessages);
+    } catch (error) {
+      console.error("Error fetching chat messages:", error);
+    }
+  }
+
+  // Add polling to fetch messages every 5 seconds
+useEffect(() => {
+  const interval = setInterval(() => {
+    if (selectedTeacher.id) {
+      handleChatMessages(selectedTeacher.id);
+    }
+  }, 5000); // Fetch messages every 5 seconds
+
+  return () => clearInterval(interval); // Cleanup interval on component unmount
+}, [selectedTeacher]);
 
   if (isLoading || (user && user.role !== "parent")) {
     return <div className="p-6 text-center text-slate-800">Chargement...</div>;
@@ -341,14 +261,18 @@ export default function ParentTeacherChat({ user }) {
                     >
                       <Button
                         variant={
-                          selectedTeacher === teacher.id ? "default" : "ghost"
+                          selectedTeacher.id === teacher.id ? "default" : "ghost"
                         }
                         className={`w-full justify-start rounded-lg ${
-                          selectedTeacher === teacher.id
+                          selectedTeacher.id === teacher.id
                             ? "bg-[#0771CB] hover:bg-[#055a9e] text-white"
                             : "text-slate-800 hover:bg-slate-100"
                         }`}
-                        onClick={() => setSelectedTeacher(teacher.id)}
+                        onClick={() =>{ 
+                          setSelectedTeacher({ id: teacher.id, teacherId: teacher.teacher_id })
+                          handleChatMessages(teacher.id);
+                      
+                      }}
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-800 font-semibold">
@@ -379,7 +303,7 @@ export default function ParentTeacherChat({ user }) {
               <CardHeader>
                 <CardTitle className="text-slate-800">
                   Conversation -{" "}
-                  {teachers.find((t) => t.id === selectedTeacher)?.name}
+                  {teachers.find((t) => t.id === selectedTeacher.id)?.name}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -409,7 +333,7 @@ export default function ParentTeacherChat({ user }) {
                           {msg.sender === "teacher" && (
                             <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-800 font-semibold">
                               {getInitials(
-                                teachers.find((t) => t.id === selectedTeacher)
+                                teachers.find((t) => t.id === selectedTeacher.id)
                                   ?.name || "T"
                               )}
                             </div>
@@ -456,7 +380,7 @@ export default function ParentTeacherChat({ user }) {
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-800 font-semibold">
                             {getInitials(
-                              teachers.find((t) => t.id === selectedTeacher)
+                              teachers.find((t) => t.id === selectedTeacher.id)
                                 ?.name || "T"
                             )}
                           </div>

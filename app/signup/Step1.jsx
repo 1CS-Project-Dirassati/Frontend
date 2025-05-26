@@ -17,7 +17,6 @@ export default function Step1({ nextStep, setParentInfo }) {
   const [first_name, setfirst_name] = useState("");
   const [last_name, setlast_name] = useState("");
 
-  const [role, setrole] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [termsChecked, setTermsChecked] = useState(false);
@@ -32,7 +31,7 @@ export default function Step1({ nextStep, setParentInfo }) {
     return Promise.resolve(false);
   }
 
-  async function registerUser(email, password, phone,role,first_name,last_name) {
+  async function registerUser(email, password, phone,first_name,last_name) {
     try {
       const res = await fetch("https://dirassati.pythonanywhere.com/auth/register", {
         method: "POST",
@@ -42,7 +41,7 @@ export default function Step1({ nextStep, setParentInfo }) {
           'Access-Control-Allow-Origin': '*',
           "origin":"http://exmple.com"
         },
-        body: JSON.stringify({ email, password, phone_number: `+123${phone}` ,role,first_name,last_name}),
+        body: JSON.stringify({ email, password, phone_number: `+123${phone}` ,role:"parent",first_name,last_name}),
       });
   
       if (!res.ok) {
@@ -61,10 +60,10 @@ export default function Step1({ nextStep, setParentInfo }) {
 
   async function handleNext() {
     if (skipValidation) {
-      const res=await registerUser(email, password, phone,role,first_name,last_name);
+      const res=await registerUser(email, password, phone,first_name,last_name);
       console.log(res)
      
-      setParentInfo({ email, password, phone, termsChecked, offersChecked,role });
+      setParentInfo({ email, password, phone, termsChecked, offersChecked });
       nextStep();
       return;
     }
@@ -91,9 +90,9 @@ export default function Step1({ nextStep, setParentInfo }) {
       setErrors(newErrors);
     } else {
       setErrors({});
-      const res=await registerUser(email, password, phone,role,first_name,last_name);
+      const res=await registerUser(email, password, phone,first_name,last_name);
       console.log(res)
-      setParentInfo({ email, password, phone, termsChecked, offersChecked, role });
+      setParentInfo({ email, password, phone, termsChecked, offersChecked });
 
       nextStep();
     }
@@ -168,15 +167,6 @@ export default function Step1({ nextStep, setParentInfo }) {
             onChange={(e) => setPhone(e.target.value)}
           />
           {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
-        </div>
-        <div>
-          <Input
-            type="text"
-            placeholder="role"
-            className="w-full"
-            value={role}
-            onChange={(e) => setrole(e.target.value)}
-          />
         </div>
         {/* Terms Checkbox */}
         <div className="flex items-center space-x-2">
