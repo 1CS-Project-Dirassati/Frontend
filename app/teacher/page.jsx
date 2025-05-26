@@ -120,8 +120,9 @@ export default function Home() {
   const permision = useSelector((state) => state.auth.role);
   const searchParams = useSearchParams();
   const router = useRouter();
+  const link = searchParams.get("timeRange")
   const [timeRange, setTimeRange] = useState(
-    searchParams.get("timeRange") || "monthly"
+   link || "monthly"
   );
 
   const statsData = [

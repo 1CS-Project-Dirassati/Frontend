@@ -33,13 +33,7 @@ export default function ParentTeacherChat({ user }) {
   ];
 
   // Hardcoded teachers
-  const [teachers, setTeachers] = useState([
-    { id: "1", name: "Fatima Haddad", subject: "Arabe" },
-    { id: "2", name: "Yassine Saghir", subject: "Mathématiques" },
-    { id: "3", name: "Khadija Ben Omar", subject: "Français" },
-    { id: "4", name: "Mohamed Kharroubi", subject: "Sciences" },
-    { id: "5", name: "Leila Bouziane", subject: "Anglais" },
-  ]);
+  const [teachers, setTeachers] = useState([]);
 
   // Initial messages (hardcoded)
   const initialMessages = {
@@ -208,8 +202,9 @@ export default function ParentTeacherChat({ user }) {
           token,
         });
         const teacherChats = response.chats.map((chat) => ({
-          id: chat.teacher_id,
-          name: `Teacher ${chat.teacher_id}`, // Replace with actual teacher name if available
+          id: chat.id,
+          teacher_id: chat.teacher_id,
+          name: `${chat.teacher_name}`, // Replace with actual teacher name if available
           subject: "Unknown", // Replace with actual subject if available
         }));
         setTeachers(teacherChats);
