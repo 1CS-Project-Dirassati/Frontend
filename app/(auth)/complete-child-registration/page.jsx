@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { setToken } from "@/app/redux/features/auth/authSlice";
 import { useRouter, useSearchParams } from "next/navigation";
-import { setToken } from "../redux/features/auth/authSlice";
-import AntInput from "../../components/ui/antInput";
-import AntButton_primary from "../../components/ui/antButton_primary ";
+import AntInput from "@/components/ui/antInput";
+import AntButton_primary from "@/components/ui/antButton_primary ";
 import apiCall from "@/components/utils/apiCall"; // Adjust the import based on your project structure
 import { useDispatch } from "react-redux";
 
@@ -14,7 +14,7 @@ export default function CompleteChildRegistration() {
   
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState(null); 
-  const[token, setToken] = useState(searchParams.get("token"));
+  const[tokenLink, setTokenLink] = useState(searchParams.get("token"));
   const dispatch = useDispatch();
      
   const handlePasswordSubmit = async (e) => {
@@ -22,7 +22,7 @@ export default function CompleteChildRegistration() {
     try {
     
    const result= await apiCall("post", "/api/students/complete-child-registration", {
-        token:token,
+        token:tokenLink,
         password:password,
       });
       const access_Token = result.access_token;
