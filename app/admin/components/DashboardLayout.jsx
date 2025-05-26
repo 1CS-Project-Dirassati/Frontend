@@ -134,33 +134,36 @@ const DashboardLayout = ({ children }) => {
     <Layout className="min-h-screen font-serif">
       {/* Sidebar */}
       <aside
-        className={`bg-sidebar-bg text-text-inverted transition-all duration-300 ${
+        className={`bg-primary text-text-inverted transition-all duration-300 ${
           collapsed ? "w-16" : "w-64"
-        } fixed h-full z-10 shadow-md`}
+        } fixed h-full z-10 shadow-xl flex flex-col`}
       >
-        <div className="p-4 flex items-center justify-between">
-          <div className="text-xl font-bold font-serif text-text-inverted">
+        {/* Header / Branding */}
+        <div className="relative flex items-center justify-between p-6   bg-primary backdrop-blur-md">
+          <div className="text-2xl font-bold font-baskerville italic text-center text-text-inverted border-b-4 border-accent inline-block">
             {collapsed ? "D" : "Dirassati"}
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
+
+          {/* Collapse Toggle Button */}
+          <button
             onClick={() => setCollapsed(!collapsed)}
-            className="text-text-inverted hover:bg-primary hover:text-text-inverted"
+            className="absolute -right-4 top-1/2 transform -translate-y-1/2 bg-accent text-white rounded-full p-2 shadow-md hover:bg-accent transition"
           >
             {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-          </Button>
+          </button>
         </div>
-        <nav className="flex flex-col gap-2 p-2">
+
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-2 bg-gradient-to-b from-primary via-primary-dark to-primary ">
           {menuItems.map((item) => (
             <Link key={item.key} href={item.href}>
               <Button
                 variant={getSelectedKey() === item.key ? "default" : "ghost"}
-                className={`w-full justify-start gap-2 text-left text-text-inverted ${
+                className={`w-full justify-start text-white gap-3 text-left rounded-xl font-medium ${
                   getSelectedKey() === item.key
-                    ? "bg-primary-light hover:bg-primary-light"
-                    : "hover:bg-primary hover:text-text-inverted"
-                } ${collapsed ? "px-2" : "px-4"}`}
+                    ? "bg-accent text-white shadow hover:bg-accent-light"
+                    : "hover:bg-primary-light hover:text-white"
+                } ${collapsed ? "px-3 py-2" : "px-4 py-3"}`}
               >
                 {item.icon}
                 {!collapsed && <span>{item.label}</span>}
@@ -168,6 +171,13 @@ const DashboardLayout = ({ children }) => {
             </Link>
           ))}
         </nav>
+
+        {/* Footer/Optional Section */}
+        {!collapsed && (
+          <div className="p-4 text-xs text-text-muted  bg-primary-dark/70">
+            &copy; {new Date().getFullYear()} Dirassati
+          </div>
+        )}
       </aside>
 
       {/* Main layout */}
@@ -177,9 +187,9 @@ const DashboardLayout = ({ children }) => {
         } transition-all duration-300 bg-background`}
       >
         {/* Header */}
-        <header className="sticky top-0 z-20 bg-header-bg shadow-card animate-fade-in">
+        <header className="sticky top-0 z-20 bg-primary shadow-card animate-fade-in">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-            <div className="text-lg font-semibold text-text">
+            <div className="text-lg font-semibold italic text-white">
               Admin Dashboard
             </div>
             <div className="flex items-center gap-4">
@@ -221,9 +231,9 @@ const DashboardLayout = ({ children }) => {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="flex items-center gap-2 text-text-inverted hover:bg-secondary hover:text-text-inverted transition-transform duration-300 hover:scale-105"
+                    className="flex items-center gap-2 text-text-inverted hover:bg-accent hover:text-text-inverted transition-transform duration-300 hover:scale-105"
                   >
-                    <Avatar className="h-8 w-8 bg-secondary text-text-inverted">
+                    <Avatar className="h-8 w-8 bg-accent text-text-inverted">
                       <AvatarImage src="/avatar.png" alt="User" />
                       <AvatarFallback>
                         <User className="w-5 h-5" />
