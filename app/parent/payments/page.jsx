@@ -27,7 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Dialog,
+  amin_dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,

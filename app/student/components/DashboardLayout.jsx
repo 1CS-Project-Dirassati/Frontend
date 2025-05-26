@@ -32,9 +32,13 @@ import {
   Notebook,
 } from "lucide-react";
 import { debounce } from "lodash";
+import { useSelector } from "react-redux";
+
 const { Content, Footer } = Layout;
 
 const DashboardLayout = ({ children }) => {
+  const user = useSelector((state)=>state.userinfo.userProfile) 
+  
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
@@ -74,32 +78,14 @@ const DashboardLayout = ({ children }) => {
   const menuItems = [
     { key: "home", icon: <HomeOutlined />, label: "Home", href: "/student" },
    
-    {
-      key: "students unapproved",
-      icon: <TeamOutlined />,
-      label: "chat with teacher",
-      href: "/student/unapproved",
-    },
-    {
-      key: "chat",
-      icon: <TeamOutlined />,
-      label: "chat with students",
-      href: "/student/unapproved",
-    },
+   
+   
     {
       key: "schedule",
       icon: <CalendarOutlined />,
-      label: "Sons schedule",
+      label: "schedule",
       href: "/student/schedule",
     },
- ,
-    {
-      key: "attendance",
-      icon: <Notebook />,
-      label: "payments",
-      href: "/student/attendance",
-    },
- 
     {
       key: "profile",
       icon: <User />,
@@ -125,7 +111,7 @@ const DashboardLayout = ({ children }) => {
       key: "logout",
       label: "Logout",
       icon: <LogOut className="w-4 h-4" />,
-      action: () => router.push("/"),
+      action: () => { localStorage.clear(); router.push("/")},
     },
   ];
 

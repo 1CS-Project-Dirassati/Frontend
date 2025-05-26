@@ -2,12 +2,17 @@
 
 import { useState } from "react";
 import { useSelector } from "react-redux";
+import { v4 as uuidv4 } from "uuid";
+import axios from "axios";
 import apiCall from "@/components/utils/apiCall";
 import AntInput from "@/components/ui/antInput";
 import AntButton_primary from "@/components/ui/antButton_primary ";
 
 export default function AddChild() {
   const accesstoken = useSelector((state) => state.auth.accessToken);
+  const CLOUD_NAME = "dur1dba1a"; // Replace with your Cloudinary cloud name
+  const UPLOAD_PRESET = "student_docs_unsigned"; // Replace with your upload preset
+
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -15,6 +20,8 @@ export default function AddChild() {
     docs_url: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadUrls, setUploadUrls] = useState([]);
   const [message, setMessage] = useState(null);
 
   const handleChange = (e) => {
@@ -30,21 +37,58 @@ export default function AddChild() {
     return emailRegex.test(email);
   };
 
+  const handleFileUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    setUploading(true);
+    const folderId = `student_docs/${uuidv4()}`;
+
+    try {
+      const urls = await Promise.all(
+        files.map(async (file) => {
+          const data = new FormData();
+          data.append("file", file);
+          data.append("upload_preset", UPLOAD_PRESET);
+          data.append("folder", folderId);
+
+          const res = await axios.post(
+            `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`,
+            data
+          );
+          return res.data.secure_url;
+        })
+      );
+      setUploadUrls(urls);
+      setFormData((prev) => ({ ...prev, docs_url: folderId }));
+    } catch (err) {
+      console.error(err);
+      setMessage({ type: "error", text: "Upload failed." });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateEmail(formData.email)) {
       setMessage({ type: "error", text: "Invalid email format." });
       return;
     }
+
+    if (!formData.docs_url) {
+      setMessage({ type: "error", text: "Please upload documents first." });
+      return;
+    }
+
     setIsSubmitting(true);
     setMessage(null);
 
     try {
       const response = await apiCall("post", "/api/students/add-child", formData, {
-        token:accesstoken,
+        token: accesstoken,
       });
       setMessage({ type: "success", text: "Child added successfully!" });
       setFormData({ first_name: "", last_name: "", email: "", docs_url: "" });
+      setUploadUrls([]);
     } catch (error) {
       setMessage({ type: "error", text: "Failed to add child. Please try again." });
     } finally {
@@ -90,20 +134,31 @@ export default function AddChild() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Documents URL</label>
-          <AntInput
-            type="url"
-            name="docs_url"
-            placeHolder="Enter documents URL"
-            inputValue={formData.docs_url}
-            onInputChange={(value) => handleChange({ target: { name: "docs_url", value } })}
-            required
+          <label className="block text-sm font-medium mb-1">Upload Documents</label>
+          <input
+            type="file"
+            multiple
+            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            onChange={handleFileUpload}
+            className="w-full text-sm border rounded p-2"
           />
+          {uploading && <p className="text-blue-600 text-sm mt-1">Uploading...</p>}
+          {uploadUrls.length > 0 && (
+            <ul className="mt-2 list-disc pl-5 text-sm text-green-600">
+              {uploadUrls.map((url, i) => (
+                <li key={i}>
+                  <a href={url} target="_blank" rel="noopener noreferrer" className="underline">
+                    Document {i + 1}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <AntButton_primary
           text={isSubmitting ? "Submitting..." : "Add Child"}
           onClick={handleSubmit}
-          disabled={isSubmitting}
+          disabled={isSubmitting || uploading}
         />
       </form>
       {message && (
