@@ -108,7 +108,7 @@ const DashboardLayout = ({ children }) => {
       key: "profile",
       label: "Profile",
       icon: <User className="w-4 h-4" />,
-      action: () => console.log("Profile clicked"),
+      action: () => router.push("/admin/me"),
     },
     
     {
@@ -139,15 +139,18 @@ const DashboardLayout = ({ children }) => {
         } fixed h-full z-10 shadow-xl flex flex-col`}
       >
         {/* Header / Branding */}
-        <div className="relative flex items-center justify-between p-6   bg-primary backdrop-blur-md">
-          <div className="text-2xl font-bold font-baskerville italic text-center text-text-inverted border-b-4 border-accent inline-block">
-            {collapsed ? "D" : "Dirassati"}
-          </div>
+        <div className="relative flex items-center justify-between p-6   text-white backdrop-blur-md">
+          <a
+            href="/admin"
+            className="text-2xl cursor-pointer font-bold font-baskerville italic text-center text-white border-b-4 border-accent inline-block"
+          >
+            <p className="text-white">{collapsed ? "D" : "Dirassati"}</p>
+          </a>
 
-          {/* Collapse Toggle Button */}
+          {/* Sidebar Toggle Button - Better Placement */}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="absolute -right-4 top-1/2 transform -translate-y-1/2 bg-accent text-white rounded-full p-2 shadow-md hover:bg-accent transition"
+            className="absolute -right-3 top-4 bg-accent text-white rounded-full p-2 shadow-lg hover:bg-accent-light transition z-30"
           >
             {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
           </button>
