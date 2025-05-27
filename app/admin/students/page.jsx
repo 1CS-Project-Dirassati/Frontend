@@ -28,9 +28,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useSelector } from "react-redux";
-import apiCall from "@/components/utils/apiCall"; // Adjust path as needed
+import apiCall from "@/components/utils/apiCall";
+import { useRouter } from "next/navigation";
 
-// Translation object (extended from StudentsGroups)
 const translations = {
   fr: {
     title: "Étudiants Approuvés",
@@ -80,86 +80,75 @@ export default function ApprovedStudents() {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [editStudent, setEditStudent] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
+
   const token = useSelector((state) => state.auth.accessToken);
-  const language = "fr"; // Default to French; adjust as needed
+  const language = "fr";
   const t = translations[language];
 
-  // Fetch data on mount
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const [studentsData, levelsData, groupsData] = await Promise.all([
-          getStudents(),
+        const [{ data, total }, levelsData, groupsData] = await Promise.all([
+          getStudents(pagination.current, pagination.pageSize),
           getLevels(),
           getGroups(),
         ]);
-        setStudents(Array.isArray(studentsData) ? studentsData : []);
-
-        setLevels(Array.isArray(levelsData) ? levelsData : []);
-        setGroups(Array.isArray(groupsData) ? groupsData : []);
-      } catch (error) {
-        console.error("Failed to load data:", error);
+        setStudents(data);
+        setLevels(levelsData);
+        setGroups(groupsData);
+        setPagination((prev) => ({ ...prev, total }));
+      } catch {
         message.error(t.errors.loadDataFailed);
       } finally {
         setIsLoading(false);
       }
     };
+
     fetchData();
-  }, [token, t]);
+  }, [pagination.current, pagination.pageSize]);
 
-  const getStudents = async () => {
-    try {
-      const response = await apiCall(
-        "get",
-        "/api/students/?is_approved=1",
-        null,
-        { token }
-      );
-      message.success(t.success.loadData);
-      return response.students || response;
-    } catch (err) {
-      message.error(t.errors.loadDataFailed);
-      throw err;
-    }
-  };
-
-  const updateStudent = async (id, values) => {
-    try {
-      await apiCall("put", `/api/students/${id}`, values, { token });
-      message.success(t.success.updateStudent);
-    } catch (err) {
-      message.error(t.errors.updateStudentFailed);
-      throw err;
-    }
+  const getStudents = async (page = 1, limit = 10) => {
+    const res = await apiCall(
+      "get",
+      `/api/students/?is_approved=1&page=${page}&limit=${limit}`,
+      null,
+      { token }
+    );
+    return {
+      data: Array.isArray(res.students) ? res.students : [],
+      total: res.total || 0,
+    };
   };
 
   const getLevels = async () => {
-    try {
-      const response = await apiCall("get", "/api/levels/", null, { token });
-      message.success(t.success.loadData);
-      return response.levels || response;
-    } catch (err) {
-      message.error(t.errors.loadDataFailed);
-      throw err;
-    }
+    const res = await apiCall("get", "/api/levels/", null, { token });
+    return Array.isArray(res.levels) ? res.levels : [];
   };
 
   const getGroups = async () => {
-    try {
-      const response = await apiCall("get", "/api/groups/", null, { token });
-      message.success(t.success.loadData);
-      return response.groups || response;
-    } catch (err) {
-      message.error(t.errors.loadDataFailed);
-      throw err;
-    }
+    const res = await apiCall("get", "/api/groups/", null, { token });
+    return Array.isArray(res.groups) ? res.groups : [];
   };
 
-  // Filter for approved students
-  const approvedStudents = students.filter(
-    (s) => s.is_approved && s.is_active !== false
-  );
+  const updateStudent = async (id, values) => {
+    await apiCall("put", `/api/students/${id}`, values, { token });
+    message.success(t.success.updateStudent);
+  };
+
+  const handleTableChange = (paginationInfo) => {
+    setPagination({
+      ...pagination,
+      current: paginationInfo.current,
+      pageSize: paginationInfo.pageSize,
+    });
+  };
 
   const getLevelName = (id) => levels.find((l) => l.id === id)?.name || "—";
   const getGroupName = (id) =>
@@ -192,59 +181,45 @@ export default function ApprovedStudents() {
     setEditDialogOpen(true);
   };
 
-  const sendNotification = async () => {
-    if (!notificationText.trim()) {
-      message.error("Please enter a notification message.");
-      return;
-    }
-    try {
-      await apiCall(
-        "post",
-        `/api/notifications/`,
-        {
-          student_id: selectedStudent.id,
-          message: notificationText,
-        },
-        { token }
-      );
-      message.success(`Notification sent to student ${selectedStudent.id}`);
-      setNotifyDialogOpen(false);
-      setNotificationText("");
-      setSelectedStudent(null);
-    } catch (error) {
-      console.error("Failed to send notification:", error);
-      message.error("Failed to send notification.");
-    }
-  };
-
   const handleEditStudent = async () => {
     if (!editStudent) return;
-    try {
-      const updates = {
-        level_id: Number(editStudent.level_id),
-        group_id:
-          editStudent.group_id === "none" ? null : Number(editStudent.group_id),
-      };
-      if (!levels.find((l) => l.id === Number(editStudent.level_id))) {
-        message.error(t.errors.invalidLevel);
-        return;
-      }
-      if (
-        editStudent.group_id !== "none" &&
-        !groups.find((g) => g.id === Number(editStudent.group_id))
-      ) {
-        message.error(t.errors.invalidGroup);
-        return;
-      }
-      await updateStudent(editStudent.id, updates);
-      const updatedStudents = await getStudents();
-      setStudents(updatedStudents);
-      setEditDialogOpen(false);
-      setEditStudent(null);
-    } catch (error) {
-      console.error("Failed to update student:", error);
-      message.error(t.errors.updateStudentFailed);
-    }
+    const levelValid = levels.some(
+      (l) => l.id === Number(editStudent.level_id)
+    );
+    const groupValid =
+      editStudent.group_id === "none" ||
+      groups.some((g) => g.id === Number(editStudent.group_id));
+    if (!levelValid) return message.error(t.errors.invalidLevel);
+    if (!groupValid) return message.error(t.errors.invalidGroup);
+
+    await updateStudent(editStudent.id, {
+      level_id: Number(editStudent.level_id),
+      group_id:
+        editStudent.group_id === "none" ? null : Number(editStudent.group_id),
+    });
+
+    const { data } = await getStudents(pagination.current, pagination.pageSize);
+    setStudents(data);
+    setEditDialogOpen(false);
+    setEditStudent(null);
+  };
+
+  const sendNotification = async () => {
+    if (!notificationText.trim())
+      return message.error("Veuillez entrer un message.");
+    await apiCall(
+      "post",
+      `/api/notifications/`,
+      {
+        student_id: selectedStudent.id,
+        message: notificationText,
+      },
+      { token }
+    );
+    message.success(`Notification envoyée à l'étudiant ${selectedStudent.id}`);
+    setNotifyDialogOpen(false);
+    setNotificationText("");
+    setSelectedStudent(null);
   };
 
   const actionMenu = (record) => ({
@@ -257,7 +232,7 @@ export default function ApprovedStudents() {
             {t.view}
           </span>
         ),
-        onClick: () => openView(record),
+        onClick: () => router.push(`/admin/studentProfile/${record.id}`),
       },
       {
         key: "edit",
@@ -294,7 +269,7 @@ export default function ApprovedStudents() {
 
   const columns = [
     {
-      title: "Name",
+      title: "Nom",
       key: "name",
       render: (_, record) => `${record.first_name} ${record.last_name}`,
     },
@@ -304,11 +279,11 @@ export default function ApprovedStudents() {
       key: "email",
     },
     {
-      title: "Level",
+      title: "Niveau",
       render: (_, record) => getLevelName(record.level_id),
     },
     {
-      title: "Group",
+      title: "Groupe",
       render: (_, record) => getGroupName(record.group_id),
     },
     {
@@ -324,186 +299,130 @@ export default function ApprovedStudents() {
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-6">{t.title}</h1>
+
       <Table
         columns={columns}
-        dataSource={approvedStudents}
+        dataSource={students.filter(
+          (s) => s.is_approved && s.is_active !== false
+        )}
         rowKey="id"
         bordered
         loading={isLoading}
+        onChange={handleTableChange}
         pagination={{
-          pageSize: 10,
+          current: pagination.current,
+          pageSize: pagination.pageSize,
+          total: pagination.total,
           showSizeChanger: true,
+          showTotal: (total) => `Total ${total} étudiants`,
         }}
       />
 
-      {/* PDF Viewer Dialog */}
-      <Dialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen}>
-        <DialogContent className="max-w-4xl h-[85vh]">
-          <DialogHeader>
-            <DialogTitle>{t.viewDocuments}</DialogTitle>
-          </DialogHeader>
-          <iframe src={pdfFile} className="w-full h-full" title="Student PDF" />
-        </DialogContent>
-      </Dialog>
-
       {/* View Student Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>{t.viewStudentTitle}</DialogTitle>
-            <DialogDescription>
-              {selectedStudent
-                ? `${selectedStudent.first_name} ${selectedStudent.last_name}`
-                : ""}
-            </DialogDescription>
           </DialogHeader>
-          {selectedStudent ? (
-            <div className="space-y-4">
-              <div>
-                <Label className="text-text">{t.firstName}</Label>
-                <p className="p-2 bg-background-dark rounded-md text-text">
-                  {selectedStudent.first_name}
-                </p>
-              </div>
-              <div>
-                <Label className="text-text">{t.lastName}</Label>
-                <p className="p-2 bg-background-dark rounded-md text-text">
-                  {selectedStudent.last_name}
-                </p>
-              </div>
-              <div>
-                <Label className="text-text">{t.email}</Label>
-                <p className="p-2 bg-background-dark rounded-md text-text">
-                  {selectedStudent.email}
-                </p>
-              </div>
-              <div>
-                <Label className="text-text">{t.level}</Label>
-                <p className="p-2 bg-background-dark rounded-md text-text">
-                  {getLevelName(selectedStudent.level_id)}
-                </p>
-              </div>
-              <div>
-                <Label className="text-text">{t.group}</Label>
-                <p className="p-2 bg-background-dark rounded-md text-text">
-                  {getGroupName(selectedStudent.group_id)}
-                </p>
-              </div>
-              <div>
-                <Label className="text-text">{t.dob}</Label>
-                <p className="p-2 bg-background-dark rounded-md text-text">
-                  {selectedStudent.date_of_birth}
-                </p>
-              </div>
-              <div>
-                <Label className="text-text">{t.nationalId}</Label>
-                <p className="p-2 bg-background-dark rounded-md text-text">
-                  {selectedStudent.national_id}
-                </p>
-              </div>
-              <div>
-                <Label className="text-text">{t.gender}</Label>
-                <p className="p-2 bg-background-dark rounded-md text-text">
-                  {selectedStudent.gender === "M" ? t.male : t.female}
-                </p>
-              </div>
+          {selectedStudent && (
+            <div className="space-y-2">
+              <p>
+                <strong>{t.firstName}:</strong> {selectedStudent.first_name}
+              </p>
+              <p>
+                <strong>{t.lastName}:</strong> {selectedStudent.last_name}
+              </p>
+              <p>
+                <strong>{t.email}:</strong> {selectedStudent.email}
+              </p>
+              <p>
+                <strong>{t.dob}:</strong> {selectedStudent.date_of_birth}
+              </p>
+              <p>
+                <strong>{t.nationalId}:</strong> {selectedStudent.national_id}
+              </p>
+              <p>
+                <strong>{t.gender}:</strong>{" "}
+                {selectedStudent.gender === "male" ? t.male : t.female}
+              </p>
+              <p>
+                <strong>{t.level}:</strong>{" "}
+                {getLevelName(selectedStudent.level_id)}
+              </p>
+              <p>
+                <strong>{t.group}:</strong>{" "}
+                {getGroupName(selectedStudent.group_id)}
+              </p>
             </div>
-          ) : (
-            <p className="text-text-muted">Aucun étudiant sélectionné</p>
           )}
-          <DialogFooter>
-            <ShadcnButton
-              variant="outline"
-              onClick={() => setViewDialogOpen(false)}
-            >
-              {t.cancel}
-            </ShadcnButton>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Edit Student Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>{t.editStudentTitle}</DialogTitle>
-            <DialogDescription>
-              {editStudent
-                ? `Modifier les détails pour l'étudiant ID: ${editStudent.id}`
-                : ""}
-            </DialogDescription>
           </DialogHeader>
-          {editStudent ? (
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="edit-level_id" className="text-text">
-                  {t.level}
-                </Label>
-                <Select
-                  value={editStudent.level_id}
-                  onValueChange={(value) =>
-                    setEditStudent({ ...editStudent, level_id: value })
-                  }
-                >
-                  <SelectTrigger
-                    id="edit-level_id"
-                    className="border-border bg-background-light text-text"
-                  >
-                    <SelectValue placeholder={t.level} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background border-border">
-                    {levels.map((l) => (
-                      <SelectItem key={l.id} value={String(l.id)}>
-                        {l.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="edit-group_id" className="text-text">
-                  {t.group}
-                </Label>
-                <Select
-                  value={editStudent.group_id}
-                  onValueChange={(value) =>
-                    setEditStudent({ ...editStudent, group_id: value })
-                  }
-                >
-                  <SelectTrigger
-                    id="edit-group_id"
-                    className="border-border bg-background-light text-text"
-                  >
-                    <SelectValue placeholder={t.group} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background border-border">
-                    <SelectItem value="none">{t.unassigned}</SelectItem>
-                    {groups.map((g) => (
-                      <SelectItem key={g.id} value={String(g.id)}>
-                        {g.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          ) : (
-            <p className="text-text-muted">Aucun étudiant sélectionné</p>
-          )}
-          <DialogFooter>
-            <ShadcnButton
-              variant="outline"
-              onClick={() => {
-                setEditDialogOpen(false);
-                setEditStudent(null);
-              }}
+          <div className="space-y-4">
+            <Label>{t.level}</Label>
+            <Select
+              value={editStudent?.level_id || ""}
+              onValueChange={(value) =>
+                setEditStudent((prev) => ({ ...prev, level_id: value }))
+              }
             >
-              {t.cancel}
-            </ShadcnButton>
+              <SelectTrigger>
+                <SelectValue placeholder="Choisir un niveau" />
+              </SelectTrigger>
+              <SelectContent>
+                {levels.map((level) => (
+                  <SelectItem key={level.id} value={String(level.id)}>
+                    {level.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Label>{t.group}</Label>
+            <Select
+              value={editStudent?.group_id || "none"}
+              onValueChange={(value) =>
+                setEditStudent((prev) => ({ ...prev, group_id: value }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Choisir un groupe" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">{t.unassigned}</SelectItem>
+                {groups.map((group) => (
+                  <SelectItem key={group.id} value={String(group.id)}>
+                    {group.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
             <ShadcnButton onClick={handleEditStudent}>
               {t.saveChanges}
             </ShadcnButton>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* PDF Dialog */}
+      <Dialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen}>
+        <DialogContent className="w-full h-[80vh] max-w-5xl">
+          {pdfFile && (
+            <iframe
+              src={pdfFile}
+              className="w-full h-full"
+              frameBorder="0"
+              title="PDF Document"
+            ></iframe>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -512,34 +431,17 @@ export default function ApprovedStudents() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t.notify}</DialogTitle>
-            <DialogDescription>
-              To student ID: {selectedStudent?.id || ""}
-            </DialogDescription>
           </DialogHeader>
           <ShadcnInput
-            placeholder="Type your message..."
             value={notificationText}
             onChange={(e) => setNotificationText(e.target.value)}
+            placeholder="Entrez votre message ici"
           />
-          <div className="flex gap-2 mt-2">
-            <ShadcnButton
-              variant="outline"
-              onClick={() =>
-                setNotificationText("Please update your profile information.")
-              }
-            >
-              Update Profile
+          <DialogFooter>
+            <ShadcnButton onClick={sendNotification}>
+              {t.saveChanges}
             </ShadcnButton>
-            <ShadcnButton
-              variant="outline"
-              onClick={() =>
-                setNotificationText("Your group assignment has been updated.")
-              }
-            >
-              Group Updated
-            </ShadcnButton>
-            <ShadcnButton onClick={sendNotification}>Send</ShadcnButton>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

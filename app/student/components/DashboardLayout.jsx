@@ -90,7 +90,7 @@ const DashboardLayout = ({ children }) => {
       key: "profile",
       icon: <User />,
       label: "Profile",
-      href: "/student/profile",
+      href: "/student/studentProfile",
     },
   ];
 
@@ -99,7 +99,7 @@ const DashboardLayout = ({ children }) => {
       key: "profile",
       label: "Profile",
       icon: <User className="w-4 h-4" />,
-      action: () => console.log("Profile clicked"),
+      action: () => router.push("/student/studentProfile"),
     },
     {
       key: "settings",

@@ -120,7 +120,7 @@ const DashboardLayout = ({ children }) => {
       key: "profile",
       label: "Profile",
       icon: <User className="w-4 h-4" />,
-      action: () => console.log("Profile clicked"),
+      action: () => router.push("/parent/parentProfile/1"),
     },
     {
       key: "settings",

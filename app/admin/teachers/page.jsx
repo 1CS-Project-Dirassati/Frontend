@@ -25,26 +25,31 @@ import { useRouter } from "next/navigation";
 export default function Teachers() {
   const router = useRouter();
   const token = useSelector((state) => state.auth.accessToken);
+
   const [teachers, setTeachers] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [modules, setModules] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalTeachers, setTotalTeachers] = useState(0);
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [form] = Form.useForm();
 
-  const fetchTeachers = async () => {
+  const fetchTeachers = async (page = currentPage, perPage = pageSize) => {
     setLoading(true);
     try {
       const res = await apiCall(
         "get",
-        "/api/teachers/?page=1&per_page=100",
+        `/api/teachers/?page=${page}&per_page=${perPage}`,
         null,
         { token }
       );
-      const teacherList = res.teachers || res.data || [];
 
-      // Fetch their modules
+      const teacherList = res.teachers || res.results || [];
       const enrichedTeachers = await Promise.all(
         teacherList.map(async (teacher) => {
           const modRes = await apiCall(
@@ -56,8 +61,10 @@ export default function Teachers() {
           return { ...teacher, modules: modRes.modules || [] };
         })
       );
+
       setTeachers(enrichedTeachers);
-    } catch (err) {
+      setTotalTeachers(res.total || res.count || 0);
+    } catch {
       message.error("Failed to load teachers");
     } finally {
       setLoading(false);
@@ -75,10 +82,10 @@ export default function Teachers() {
 
   useEffect(() => {
     if (token) {
-      fetchTeachers();
+      fetchTeachers(currentPage, pageSize);
       fetchModules();
     }
-  }, [token]);
+  }, [token, currentPage, pageSize]);
 
   const handleEdit = (record) => {
     setSelectedTeacher(record);
@@ -101,7 +108,6 @@ export default function Teachers() {
 
   const syncModules = async (teacherId, newModuleIds) => {
     const oldModuleIds = selectedTeacher?.modules?.map((m) => m.id) || [];
-
     const toAdd = newModuleIds.filter((id) => !oldModuleIds.includes(id));
     const toRemove = oldModuleIds.filter((id) => !newModuleIds.includes(id));
 
@@ -126,12 +132,30 @@ export default function Teachers() {
   const handleUpdate = async () => {
     try {
       const values = await form.validateFields();
-      await apiCall("put", `/api/teachers/${selectedTeacher.id}`, values, {
+
+      const {
+        first_name,
+        last_name,
+        phone_number,
+        address,
+        profile_picture,
+        modules,
+      } = values;
+
+      const payload = {
+        first_name,
+        last_name,
+        phone_number,
+        address,
+        profile_picture,
+      };
+
+      await apiCall("put", `/api/teachers/${selectedTeacher.id}`, payload, {
         token,
       });
 
-      if (Array.isArray(values.modules)) {
-        await syncModules(selectedTeacher.id, values.modules);
+      if (Array.isArray(modules)) {
+        await syncModules(selectedTeacher.id, modules);
       }
 
       message.success("Teacher updated");
@@ -141,17 +165,43 @@ export default function Teachers() {
       message.error("Update failed");
     }
   };
+  
 
   const handleCreate = async () => {
     try {
       const values = await form.validateFields();
-      const newTeacher = await apiCall("post", `/api/teachers/`, values, {
+
+      // Destructure the exact fields expected by the API
+      const {
+        email,
+        password,
+        phone_number,
+        first_name,
+        last_name,
+        address,
+        profile_picture,
+        modules,
+      } = values;
+
+      // Construct only the allowed payload
+      const payload = {
+        email,
+        password,
+        phone_number,
+        first_name,
+        last_name,
+        address,
+        profile_picture,
+      };
+
+      const newTeacher = await apiCall("post", `/api/teachers/`, payload, {
         token,
       });
 
-      if (Array.isArray(values.modules) && newTeacher.id) {
+      // Now sync modules only if they exist
+      if (Array.isArray(modules) && newTeacher.id) {
         await Promise.all(
-          values.modules.map((id) =>
+          modules.map((id) =>
             apiCall(
               "post",
               `/api/modules/${id}/teachers/${newTeacher.id}`,
@@ -166,10 +216,11 @@ export default function Teachers() {
       setIsCreateModalOpen(false);
       form.resetFields();
       fetchTeachers();
-    } catch {
+    } catch (err) {
       message.error("Failed to create teacher");
     }
   };
+  
 
   const columns = [
     { title: "ID", dataIndex: "id", key: "id" },
@@ -181,6 +232,21 @@ export default function Teachers() {
     { title: "Email", dataIndex: "email", key: "email" },
     { title: "Phone", dataIndex: "phone_number", key: "phone_number" },
     { title: "Address", dataIndex: "address", key: "address" },
+    {
+      title: "Profile",
+      dataIndex: "profile_picture",
+      key: "profile_picture",
+      render: (url) =>
+        url ? (
+          <img
+            src={url}
+            alt="Profile"
+            className="w-10 h-10 rounded-full object-cover"
+          />
+        ) : (
+          "N/A"
+        ),
+    },
     {
       title: "Modules",
       key: "modules",
@@ -253,8 +319,18 @@ export default function Teachers() {
           dataSource={teachers}
           rowKey="id"
           loading={loading}
-          pagination={{ pageSize: 10 }}
-          scroll={{ x: 900 }}
+          pagination={{
+            current: currentPage,
+            pageSize: pageSize,
+            total: totalTeachers,
+            showSizeChanger: true,
+            pageSizeOptions: ["10", "20", "50"],
+            onChange: (page, size) => {
+              setCurrentPage(page);
+              setPageSize(size);
+            },
+          }}
+          scroll={{ x: 1000 }}
         />
       </div>
 
@@ -292,6 +368,9 @@ export default function Teachers() {
             <AntInput />
           </Form.Item>
           <Form.Item name="address" label="Address">
+            <AntInput />
+          </Form.Item>
+          <Form.Item name="profile_picture" label="Profile Picture URL">
             <AntInput />
           </Form.Item>
           <Form.Item name="modules" label="Modules">
@@ -337,10 +416,24 @@ export default function Teachers() {
           >
             <AntInput />
           </Form.Item>
+          <Form.Item
+            name="password"
+            label="Password"
+            rules={[{ required: true, min: 6 }]}
+          >
+            <AntInput.Password />
+          </Form.Item>
           <Form.Item name="phone_number" label="Phone Number">
             <AntInput />
           </Form.Item>
           <Form.Item name="address" label="Address">
+            <AntInput />
+          </Form.Item>
+          <Form.Item
+            name="profile_picture"
+            label="Profile Picture URL"
+            rules={[{ required: true }]}
+          >
             <AntInput />
           </Form.Item>
           <Form.Item name="modules" label="Modules">
