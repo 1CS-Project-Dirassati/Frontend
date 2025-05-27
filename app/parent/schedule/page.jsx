@@ -24,7 +24,7 @@ import { useSelector } from "react-redux";
 import apiCall from "@/components/utils/apiCall";
 import { message, Spin } from "antd";
 
-// Define fixed time slots
+// Define fixed time slots with normalized times
 const FIXED_TIME_SLOTS = [
   { time: '08:00', endTime: '10:00' },
   { time: '10:00', endTime: '12:00' },
@@ -34,11 +34,16 @@ const FIXED_TIME_SLOTS = [
 // Define fixed days
 const FIXED_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
-// Helper function to parse time slot (e.g., "d1h8-10" to day and time)
+// Helper function to normalize time format (e.g., "8:00" to "08:00")
+const normalizeTime = (time) => {
+  return time.padStart(5, '0'); // This will convert "8:00" to "08:00"
+};
+
+// Helper function to parse time slot (e.g., "d3h8-10" to day and time)
 const parseTimeSlot = (timeSlot) => {
   const [dayPart, timePart] = timeSlot.split('h');
   const day = parseInt(dayPart.replace('d', ''));
-  const [start, end] = timePart.split('-').map(t => `${t}:00`);
+  const [start, end] = timePart.split('-').map(t => normalizeTime(`${t}:00`));
   
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   return {
@@ -60,6 +65,7 @@ export default function ParentSchedule() {
 
   const token = useSelector((state) => state.auth.accessToken);
   const parentId = useSelector((state) => state.userinfo.userProfile.id);
+  const parentRole = useSelector((state) => state.userinfo.userProfile.role);
 
   // Fetch parent's children
   useEffect(() => {
@@ -78,10 +84,12 @@ export default function ParentSchedule() {
         );
         console.log("response", response)
 
-
-        if (response && Array.isArray(response)) {
+        
+        if (response && Array.isArray(response.students)) {
           setStudents(response.students);
           // Set the first student as default if available
+          console.log('xxxxxxxxxxxwwwwwwwwwwww')
+          console.log("response.students", response.students)
           if (response.students.length > 0) {
             setSelectedStudent(response.students[0]);
           }
@@ -122,15 +130,26 @@ export default function ParentSchedule() {
             return {
               id: session.id,
               day,
-              time,
-              endTime,
+              time: normalizeTime(time), // Normalize the time format
+              endTime: normalizeTime(endTime), // Normalize the end time format
               subject: session.module_name,
               teacher: session.teacher_name,
               room: session.salle_name,
               groupId: session.group_id,
-              groupName: session.group_name
+              groupName: session.group_name,
+              semesterName: session.semester_name,
+              semesterIndex: session.semester_index
             };
           });
+
+          // Sort sessions by day and time for consistent display
+          formattedSessions.sort((a, b) => {
+            const dayOrder = FIXED_DAYS.indexOf(a.day) - FIXED_DAYS.indexOf(b.day);
+            if (dayOrder !== 0) return dayOrder;
+            return a.time.localeCompare(b.time);
+          });
+
+          console.log("Formatted sessions:", formattedSessions);
           setSessions(formattedSessions);
         } else {
           setError("Failed to fetch sessions");
@@ -172,7 +191,10 @@ export default function ParentSchedule() {
     };
     
     FIXED_DAYS.forEach(day => {
-      const session = sessions.find(s => s.day === day && s.time === slot.time);
+      const session = sessions.find(s => 
+        s.day === day && 
+        normalizeTime(s.time) === slot.time
+      );
       row[day] = session ? (
         <div className="p-2">
           <div className="font-semibold text-primary">{session.subject}</div>
@@ -233,7 +255,7 @@ export default function ParentSchedule() {
   // Check parent access and set default child
   useEffect(() => {
     console.log("parentId", parentId)
-    if (!parentId ) {
+    if (parentId && parentRole !== "parent") {
       alert(translations[language].unauthorized);
       setLoading(false);
       return;
@@ -330,6 +352,11 @@ export default function ParentSchedule() {
               <Calendar className="w-6 h-6 text-slate-600" />
               {translations[language].cardTitle} - {selectedStudent?.group_name}
             </CardTitle>
+            {selectedStudent && sessions.length > 0 && (
+              <div className="text-sm text-gray-600 mt-2">
+                {sessions[0].semesterName} (Semester {sessions[0].semesterIndex})
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             <div className="overflow-auto">
@@ -364,35 +391,27 @@ export default function ParentSchedule() {
                           language === "ar" ? "text-right" : "text-left"
                         }`}
                       >
-                        {row.time}
+                        {row.time} - {row.endTime}
                       </TableCell>
-                      {FIXED_DAYS.map((day) => (
+                      {FIXED_DAYS.map((day) => {
+                        const session = sessions.find(s => s.day === day && s.time === row.time);
+                        return (
                         <TableCell
-                          key={`${row.key}-${day}`}
+                            key={`${row.key}-${day}`}
                           className={`p-2 ${
-                            sessions.find(s => s.day === day && s.time === row.time)
-                              ? "bg-slate-500"
-                              : "bg-slate-100"
+                              session ? "bg-slate-500" : "bg-slate-100"
                           } text-white`}
                         >
-                          {sessions.find(s => s.day === day && s.time === row.time) ? (
+                            {session ? (
                             <div>
                               <p className="font-semibold">
-                                {
-                                  translations[language].subjects[
-                                    sessions.find(s => s.day === day && s.time === row.time).subject
-                                  ]
-                                }
+                                  {session.subject}
                               </p>
                               <p className="text-sm">
-                                {
-                                  sessions.find(s => s.day === day && s.time === row.time).teacher
-                                }
+                                  {session.teacher}
                               </p>
                               <p className="text-sm">
-                                {
-                                  sessions.find(s => s.day === day && s.time === row.time).room
-                                }
+                                  {session.room}
                               </p>
                             </div>
                           ) : (
@@ -401,7 +420,8 @@ export default function ParentSchedule() {
                             </p>
                           )}
                         </TableCell>
-                      ))}
+                        );
+                      })}
                     </TableRow>
                   ))}
                 </TableBody>

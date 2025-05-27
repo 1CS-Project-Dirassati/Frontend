@@ -142,7 +142,7 @@ const AdminSchedulePage = () => {
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      <Card bordered={false} className="shadow-lg">
+      <Card variant={false} className="shadow-lg">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-semibold text-gray-800">
             Schedule Management
