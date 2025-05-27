@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useSelector } from "react-redux";
+import { useSelector,useDispatch } from "react-redux";
 import apiCall from "../../components/utils/apiCall";
 import { Spin, Alert, message } from "antd";
-
+import {setUserProfile} from "../redux/features/userinfoSlice"
 import {
   Card as AntCard,
   Col,
@@ -133,40 +133,38 @@ export default function Home() {
   const [timeRange, setTimeRange] = useState(
     searchParams.get("timeRange") || "monthly"
   );
+const dispatch = useDispatch();
+ const authToken = useSelector((state) => state.auth.accessToken);
+  const parent = useSelector((state)=>state.userinfo.userProfile) 
 
   useEffect(() => {
-    const fetchStudentData = async () => {
+    
+    const fetchStats = async () => {
+     
+      
+
+      
       try {
-        setLoading(true);
-        const response = await apiCall("get", `/api/students/${userId}`);
-        setStudentData(response);
-
-        // Fetch attendance data
-        const attendanceResponse = await apiCall(
-          "get",
-          `/api/students/${userId}/attendance`
-        );
-        setAttendanceData(attendanceResponse);
-
-        // Fetch notes data
-        const notesResponse = await apiCall(
-          "get",
-          `/api/students/${userId}/notes`
-        );
-        setNotesData(notesResponse);
-
-        setLoading(false);
-      } catch (err) {
-        setError(err.message);
-        message.error("Failed to load student data");
-        setLoading(false);
-      }
-    };
-
-    if (userId) {
-      fetchStudentData();
+      const response = await apiCall("get", `/api/students/?archived=0&page=1&per_page=10`, null, {
+        token: authToken,
+      });
+         const data= response.students[0]; 
+         console.log(data)
+       dispatch(setUserProfile(data));
+      
+       
+        setStatsData(stats);
+      } catch (error) {
+      console.log(error.message);
+      setError(error.message);
+    } finally {
+      setLoading(false);
     }
-  }, [userId]);
+    }
+  
+    
+    fetchStats();
+  }, []);
 
   
  

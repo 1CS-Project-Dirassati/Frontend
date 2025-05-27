@@ -1,181 +1,197 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
-import apiCall from "../../../components/utils/apiCall";
-import { Card, Avatar, Tabs, List, Tag, Spin, Alert, message } from "antd";
-import {
-  UserOutlined,
-  MailOutlined,
-  BookOutlined,
-  TeamOutlined,
-} from "@ant-design/icons";
+import apiCall from "@/components/utils/apiCall";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button as ShadcnButton } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {setUserProfile} from "../../redux/features/userinfoSlice";
+import { set } from "date-fns";
 
-export default function StudentProfile() {
-  const userId = useSelector((state) => state.auth.userId);
+export default function ParentProfile() {
+  const id = 1;
+  const router = useRouter();
+  
+
+  const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [studentData, setStudentData] = useState(null);
-  const [notes, setNotes] = useState([]);
-  const [absences, setAbsences] = useState([]);
+  
+  
+
+  
+  const authToken = useSelector((state) => state.auth.accessToken);
+  const parent = useSelector((state)=>state.userinfo.userProfile) 
 
   useEffect(() => {
-    const fetchStudentProfile = async () => {
+    
+    const fetchStats = async () => {
+     
+      
+
+      
       try {
-        setLoading(true);
-        const response = await apiCall("get", `/api/students/${userId}`);
-        setStudentData(response);
-
-        // Fetch student notes
-        const notesResponse = await apiCall(
-          "get",
-          `/api/students/${userId}/notes`
-        );
-        setNotes(notesResponse);
-
-        // Fetch student absences
-        const absencesResponse = await apiCall(
-          "get",
-          `/api/students/${userId}/absences`
-        );
-        setAbsences(absencesResponse);
-
-        setLoading(false);
-      } catch (err) {
-        setError(err.message);
-        message.error("Failed to load student profile");
-        setLoading(false);
-      }
-    };
-
-    if (userId) {
-      fetchStudentProfile();
+      const response = await apiCall("get", `/api/students/?archived=0&page=1&per_page=10`, null, {
+        token: authToken,
+      });
+         const data= response.students[0]; 
+         
+       dispatch(setUserProfile(data));
+      
+       
+        setStatsData(stats);
+      } catch (error) {
+      console.log(error.message);
+      setError(error.message);
+    } finally {
+      setLoading(false);
     }
-  }, [userId]);
+    }
+  
+    
+    fetchStats();
+  }, [authToken]);
 
-  if (loading) {
+
+  
+
+  if (!parent) {
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <Spin size="large" />
+      <div className="p-4 min-h-screen flex items-center justify-center bg-background">
+        <Card className="bg-background border-border shadow-lg rounded-lg">
+          <CardHeader>
+            <CardTitle className="text-text text-2xl">
+              Error Loading Profile
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            
+            <ShadcnButton
+              onClick={() => router.push("/admin_test/parents")}
+              className="bg-secondary hover:bg-accent text-background transition-all duration-300"
+            >
+              Back to Parents
+            </ShadcnButton>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  if (error) {
-    return <Alert message="Error" description={error} type="error" showIcon />;
+  if (!parent) {
+    return (
+      <div className="p-4 min-h-screen flex items-center justify-center bg-background">
+        <Card className="bg-background border-border shadow-lg rounded-lg">
+          <CardHeader>
+            <CardTitle className="text-text text-2xl">
+              Parent Not Found
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ShadcnButton
+              onClick={() => router.push("/admin_test/parents")}
+              className="bg-secondary hover:bg-accent text-background transition-all duration-300"
+            >
+              Back to Parents
+            </ShadcnButton>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
-  const items = [
-    {
-      key: "1",
-      label: "Personal Information",
-      children: (
-        <Card>
-          <div className="flex items-center space-x-4 mb-6">
-            <Avatar size={64} icon={<UserOutlined />} />
-            <div>
-              <h2 className="text-2xl font-bold">
-                {studentData?.first_name} {studentData?.last_name}
-              </h2>
-              <p className="text-gray-600">
-                <MailOutlined className="mr-2" />
-                {studentData?.email}
-              </p>
-            </div>
-          </div>
+  if (!parent) {
+    return (
+      <div className="p-4 min-h-screen flex items-center justify-center bg-background">
+        <Card className="bg-background border-border shadow-lg rounded-lg">
+          <CardHeader>
+            <CardTitle className="text-text text-2xl">
+              Loading Parent Profile...
+            </CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <h3 className="text-lg font-semibold mb-2">
-                Academic Information
-              </h3>
-              <p>
-                <BookOutlined className="mr-2" />
-                Level: {studentData?.level?.name}
-              </p>
-              <p>
-                <TeamOutlined className="mr-2" />
-                Group: {studentData?.group?.name}
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Parent Information</h3>
-              <p>
-                Parent Name: {studentData?.parent?.first_name}{" "}
-                {studentData?.parent?.last_name}
-              </p>
-              <p>Parent Email: {studentData?.parent?.email}</p>
-            </div>
-          </div>
-        </Card>
-      ),
-    },
-    {
-      key: "2",
-      label: "Academic Performance",
-      children: (
-        <Card>
-          <List
-            dataSource={notes}
-            renderItem={(note) => (
-              <List.Item>
-                <List.Item.Meta
-                  title={`${note.subject} - ${note.module}`}
-                  description={`Date: ${new Date(
-                    note.date
-                  ).toLocaleDateString()}`}
-                />
-                <div>
-                  <Tag color={note.grade >= 10 ? "green" : "red"}>
-                    Grade: {note.grade}
-                  </Tag>
-                </div>
-              </List.Item>
-            )}
-          />
-        </Card>
-      ),
-    },
-    {
-      key: "3",
-      label: "Attendance Record",
-      children: (
-        <Card>
-          <List
-            dataSource={absences}
-            renderItem={(absence) => (
-              <List.Item>
-                <List.Item.Meta
-                  title={`${absence.subject} - ${absence.module}`}
-                  description={`Date: ${new Date(
-                    absence.date
-                  ).toLocaleDateString()}`}
-                />
-                <div>
-                  <Tag color={absence.justified ? "blue" : "red"}>
-                    {absence.justified ? "Justified" : "Unjustified"}
-                  </Tag>
-                </div>
-              </List.Item>
-            )}
-          />
-        </Card>
-      ),
-    },
-  ];
+  // Unique styling based on ID
+  const isEvenId = parseInt(id) % 2 === 0;
+  const accentColor =
+    parseInt(id) % 3 === 0
+      ? "#1ABC9C"
+      : parseInt(id) % 3 === 1
+      ? "#4FD1C5"
+      : "#F59E0B";
+  const layoutClass = isEvenId
+    ? "grid grid-cols-1 md:grid-cols-2 gap-6"
+    : "space-y-6";
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">Student Profile</h1>
-      <Tabs defaultActiveKey="1" items={items} />
+    <div className="p-4 min-h-screen bg-background">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8 text-text animate-fade-in">
+          Parent Profile
+        </h1>
+        <Card className="bg-background border-border shadow-xl rounded-xl overflow-hidden transition-all duration-300 hover:shadow-2xl">
+          <div className="relative">
+            <div
+              className="h-32 w-full"
+              style={{
+                background: `linear-gradient(135deg, ${accentColor}22, ${accentColor}55)`,
+              }}
+            />
+            <Avatar className="absolute top-16 left-6 w-24 h-24 border-4 border-background shadow-lg transform transition-all duration-300 hover:scale-105">
+              <AvatarImage
+                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330"
+                
+              />
+              <AvatarFallback className="bg-secondary text-background text-2xl">
+                
+              </AvatarFallback>
+            </Avatar>
+          </div>
+          <CardHeader className="pt-16">
+            <CardTitle className="text-2xl font-semibold text-text">
+              {parent.first_name} {parent.last_name}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className={layoutClass}>
+            <div className="space-y-4 animate-slide-up">
+              <div>
+                <span className="font-semibold text-text">Email:</span>
+                <p className="text-text mt-1">{parent.email}</p>
+              </div>
+              <div>
+                <span className="font-semibold text-text">Phone:</span>
+                <p
+                  className="text-text mt-1 font-bold"
+                  style={{ color: accentColor }}
+                >
+                  {parent.phone_number}
+                </p>
+              </div>
+            </div>
+            <div
+              className="space-y-4 animate-slide-up"
+              style={{ animationDelay: "0.1s" }}
+            >
+              <div>
+                <span className="font-semibold text-text">Address:</span>
+                <p className="text-text mt-1">{parent.address}</p>
+              </div>
+            </div>
+          </CardContent>
+          <CardContent>
+            <ShadcnButton
+              onClick={() => router.push("/admin_test/parents")}
+              className="bg-secondary hover:bg-accent text-background transition-all duration-300 transform hover:scale-105"
+            >
+              Back to Parents
+            </ShadcnButton>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
