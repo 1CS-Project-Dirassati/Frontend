@@ -78,6 +78,12 @@ const DashboardLayout = ({ children }) => {
       href: "/admin/teachers",
     },
     {
+      key: "archive",
+      icon: <TeamOutlined />,
+      label: "Archive",
+      href: "/admin/archive",
+    },
+    {
       key: "groups",
       icon: <Group />,
       label: "Groups",
@@ -144,7 +150,7 @@ const DashboardLayout = ({ children }) => {
             href="/admin"
             className="text-2xl cursor-pointer font-bold font-baskerville italic text-center text-white border-b-4 border-accent inline-block"
           >
-            <p className="text-white">{collapsed ? "D" : "Dirassati"}</p>
+            <p className="text-white ">{collapsed ? "D" : "Dirassati"}</p>
           </a>
 
           {/* Sidebar Toggle Button - Better Placement */}
@@ -157,14 +163,14 @@ const DashboardLayout = ({ children }) => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-2 bg-gradient-to-b from-primary via-primary-dark to-primary ">
+        <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-2  ">
           {menuItems.map((item) => (
             <Link key={item.key} href={item.href}>
               <Button
                 variant={getSelectedKey() === item.key ? "default" : "ghost"}
                 className={`w-full justify-start text-white gap-3 text-left rounded-xl font-medium ${
                   getSelectedKey() === item.key
-                    ? "bg-accent text-white shadow hover:bg-accent-light"
+                    ? "bg-primary-light text-white shadow hover:bg-primary-light/80"
                     : "hover:bg-primary-light hover:text-white"
                 } ${collapsed ? "px-3 py-2" : "px-4 py-3"}`}
               >

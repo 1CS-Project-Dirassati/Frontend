@@ -25,15 +25,15 @@
 /* Theme */
 @theme {
   --font-baskerville: 'Libre Baskerville', 'Open Sans', sans-serif;
-  --color-primary: #0771CB;       /* vibrant blue */
+  --color-primary: #1C3144;       /* vibrant blue */
   --color-primary-light: #3B8EE0;
   --color-primary-dark: #055A9E;
 
-  --color-secondary: #1ABC9C;     /* turquoise */
+  --color-secondary: #EFF2C0;     /* turquoise */
   --color-secondary-light: #48D1B5;
   --color-secondary-dark: #169E83;
 
-  --color-accent: #FA541C;        /* bright orange */
+  --color-accent: #1C3144;        /* bright orange */
   --color-accent-light: #FF8254;
   --color-accent-dark: #C43A0D;
 

@@ -132,12 +132,30 @@ export default function Teachers() {
   const handleUpdate = async () => {
     try {
       const values = await form.validateFields();
-      await apiCall("put", `/api/teachers/${selectedTeacher.id}`, values, {
+
+      const {
+        first_name,
+        last_name,
+        phone_number,
+        address,
+        profile_picture,
+        modules,
+      } = values;
+
+      const payload = {
+        first_name,
+        last_name,
+        phone_number,
+        address,
+        profile_picture,
+      };
+
+      await apiCall("put", `/api/teachers/${selectedTeacher.id}`, payload, {
         token,
       });
 
-      if (Array.isArray(values.modules)) {
-        await syncModules(selectedTeacher.id, values.modules);
+      if (Array.isArray(modules)) {
+        await syncModules(selectedTeacher.id, modules);
       }
 
       message.success("Teacher updated");
@@ -147,17 +165,43 @@ export default function Teachers() {
       message.error("Update failed");
     }
   };
+  
 
   const handleCreate = async () => {
     try {
       const values = await form.validateFields();
-      const newTeacher = await apiCall("post", `/api/teachers/`, values, {
+
+      // Destructure the exact fields expected by the API
+      const {
+        email,
+        password,
+        phone_number,
+        first_name,
+        last_name,
+        address,
+        profile_picture,
+        modules,
+      } = values;
+
+      // Construct only the allowed payload
+      const payload = {
+        email,
+        password,
+        phone_number,
+        first_name,
+        last_name,
+        address,
+        profile_picture,
+      };
+
+      const newTeacher = await apiCall("post", `/api/teachers/`, payload, {
         token,
       });
 
-      if (Array.isArray(values.modules) && newTeacher.id) {
+      // Now sync modules only if they exist
+      if (Array.isArray(modules) && newTeacher.id) {
         await Promise.all(
-          values.modules.map((id) =>
+          modules.map((id) =>
             apiCall(
               "post",
               `/api/modules/${id}/teachers/${newTeacher.id}`,
@@ -172,10 +216,11 @@ export default function Teachers() {
       setIsCreateModalOpen(false);
       form.resetFields();
       fetchTeachers();
-    } catch {
+    } catch (err) {
       message.error("Failed to create teacher");
     }
   };
+  
 
   const columns = [
     { title: "ID", dataIndex: "id", key: "id" },
@@ -187,6 +232,21 @@ export default function Teachers() {
     { title: "Email", dataIndex: "email", key: "email" },
     { title: "Phone", dataIndex: "phone_number", key: "phone_number" },
     { title: "Address", dataIndex: "address", key: "address" },
+    {
+      title: "Profile",
+      dataIndex: "profile_picture",
+      key: "profile_picture",
+      render: (url) =>
+        url ? (
+          <img
+            src={url}
+            alt="Profile"
+            className="w-10 h-10 rounded-full object-cover"
+          />
+        ) : (
+          "N/A"
+        ),
+    },
     {
       title: "Modules",
       key: "modules",
@@ -270,7 +330,7 @@ export default function Teachers() {
               setPageSize(size);
             },
           }}
-          scroll={{ x: 900 }}
+          scroll={{ x: 1000 }}
         />
       </div>
 
@@ -308,6 +368,9 @@ export default function Teachers() {
             <AntInput />
           </Form.Item>
           <Form.Item name="address" label="Address">
+            <AntInput />
+          </Form.Item>
+          <Form.Item name="profile_picture" label="Profile Picture URL">
             <AntInput />
           </Form.Item>
           <Form.Item name="modules" label="Modules">
@@ -353,10 +416,24 @@ export default function Teachers() {
           >
             <AntInput />
           </Form.Item>
+          <Form.Item
+            name="password"
+            label="Password"
+            rules={[{ required: true, min: 6 }]}
+          >
+            <AntInput.Password />
+          </Form.Item>
           <Form.Item name="phone_number" label="Phone Number">
             <AntInput />
           </Form.Item>
           <Form.Item name="address" label="Address">
+            <AntInput />
+          </Form.Item>
+          <Form.Item
+            name="profile_picture"
+            label="Profile Picture URL"
+            rules={[{ required: true }]}
+          >
             <AntInput />
           </Form.Item>
           <Form.Item name="modules" label="Modules">

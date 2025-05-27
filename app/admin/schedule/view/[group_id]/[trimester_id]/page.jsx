@@ -51,7 +51,7 @@ export default function ViewSchedulePage() {
         const groupRes = await apiCall("get", `/api/groups/${group_id}`, null, {
           token,
         });
-        setGroup(groupRes.groups);
+        setGroup(groupRes.group);
       } catch (err) {
         console.error(err);
         setError("Failed to load schedule.");
