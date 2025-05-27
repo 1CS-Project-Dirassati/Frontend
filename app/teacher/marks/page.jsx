@@ -1,262 +1,473 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Card, Select, Table, InputNumber, Button, message } from "antd";
+import { useState, useEffect } from "react";
+import { Card, Select, Table, Button, Input, message, Spin } from "antd";
 import { useSelector } from "react-redux";
-import { jwtDecode } from "jwt-decode";
 import apiCall from "@/components/utils/apiCall";
 
-const fetchStudentsForGroup = async (groupId, token) => {
-  console.log("Fetching students for group:", groupId);
-  const res = await apiCall("get", `/api/groups/${groupId}/students/`, null, {
-    token,
-  });
+const { Option } = Select;
 
-  console.log("Students API response:", res);
-
-  return res.students || res.data || [];
-};
-
-// ========== Component ==========
-
-export default function TeacherMarksPage() {
-  const token = useSelector((state) => state.auth.accessToken);
+export default function TeacherMarks() {
   const [modules, setModules] = useState([]);
   const [groups, setGroups] = useState([]);
   const [students, setStudents] = useState([]);
   const [selectedModule, setSelectedModule] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
-  const [loadingStudents, setLoadingStudents] = useState(false);
-  const [saving, setSaving] = useState({ test: false, cc: false, exam: false });
-  const teacherId = useSelector((state)=>state.userinfo.userProfile.id) 
+  const [loading, setLoading] = useState(false);
+  const [marks, setMarks] = useState({});
+  const [saving, setSaving] = useState({});
+  const [previousNotes, setPreviousNotes] = useState({});
+  
+  const token = useSelector((state) => state.auth.accessToken);
+  const teacherId = useSelector((state) => state.userinfo.userProfile.id);
 
-
-
+  // Fetch modules for the current teacher
   useEffect(() => {
-    if (!selectedGroup || !token) return;
+    const fetchModules = async () => {
+      if (!token || !teacherId) return;
 
-    setLoadingStudents(true);
-    fetchStudentsForGroup(selectedGroup, token)
-      .then((data) => {
-        setStudents(
-          data.map((s) => ({
-            ...s,
-            test: null,
-            cc: null,
-            exam: null,
-          }))
+      try {
+        setLoading(true);
+        const response = await apiCall(
+          "GET",
+          `/api/modules/?teacher_id=${teacherId}`,
+          null,
+          { token }
         );
-      })
-      .catch((err) => {
-        console.error("Error fetching students:", err);
-        message.error("Failed to load students.");
-      })
-      .finally(() => setLoadingStudents(false));
-  }, [selectedGroup, token]);
+        console.log("modules");
+        console.log(response);
 
+        if (response.status && response.modules) {
+          setModules(response.modules);
+        } else {
+          message.error("Failed to fetch modules");
+        }
+      } catch (error) {
+        console.error("Error fetching modules:", error);
+        message.error("Error loading modules");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchModules();
+  }, [token, teacherId]);
+
+  // Fetch groups when module is selected
   useEffect(() => {
+    const fetchGroups = async () => {
+      if (!token || !teacherId || !selectedModule) return;
+
+      try {
+        setLoading(true);
+        const response = await apiCall(
+          "GET",
+          `/api/groups/?module_id=${selectedModule.id}&teacher_id=${teacherId}`,
+          null,
+          { token }
+        );
+        console.log("groups");
+        console.log(response);
+
+        if (response.status && response.groups) {
+          setGroups(response.groups);
+        } else {
+          message.error("Failed to fetch groups");
+        }
+      } catch (error) {
+        console.error("Error fetching groups:", error);
+        message.error("Error loading groups");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGroups();
+  }, [token, teacherId, selectedModule]);
+
+  // Fetch students and their previous notes when group is selected
+  useEffect(() => {
+    const fetchStudentsAndNotes = async () => {
+      if (!token || !selectedGroup || !selectedModule) return;
+
+      try {
+        setLoading(true);
+        // Fetch students
+        const studentsResponse = await apiCall(
+          "GET",
+          `/api/students/?group_id=${selectedGroup.id}`,
+          null,
+          { token }
+        );
+
+        console.log("students response:", studentsResponse);
+
+        if (!studentsResponse.status || !studentsResponse.students) {
+          throw new Error("Failed to fetch students");
+        }
+
+        // Process students and initialize marks
+        const students = studentsResponse.students;
+        console.log("processed students:", students);
+        setStudents(students);
+
+        // Fetch previous notes for this module and group
+        const notesResponse = await apiCall(
+          "GET",
+          `/api/notes/?module_id=${selectedModule.id}&group_id=${selectedGroup.id}`,
+          null,
+          { token }
+        );
+
+        console.log("notes response:", notesResponse);
+
+        if (!notesResponse.status) {
+          throw new Error("Failed to fetch previous notes");
+        }
+
+        // Initialize marks and previous notes
+        const initialMarks = {};
+        const notesByStudent = {};
+
+        students.forEach(student => {
+          // Initialize marks object
+          initialMarks[student.id] = {
+            cc: "",
+            exam1: "",
+            exam2: ""
+          };
+
+          // Initialize notes object
+          notesByStudent[student.id] = {
+            cc: null,
+            exam1: null,
+            exam2: null
+          };
+        });
+
+        // Process previous notes
+        if (notesResponse.notes && Array.isArray(notesResponse.notes)) {
+          notesResponse.notes.forEach(note => {
+            if (notesByStudent[note.student_id]) {
+              // Convert note type to lowercase for consistency
+              const noteType = note.type.toLowerCase();
+              notesByStudent[note.student_id][noteType] = note;
+              // Set the mark value in the marks state
+              initialMarks[note.student_id][noteType] = note.value.toString();
+            }
+          });
+        }
+
+        console.log("setting marks:", initialMarks);
+        console.log("setting previous notes:", notesByStudent);
+
+        setPreviousNotes(notesByStudent);
+        setMarks(initialMarks);
+
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        message.error(error.message || "Error loading data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudentsAndNotes();
+  }, [token, selectedGroup, selectedModule]);
+
+  const handleModuleChange = (moduleId) => {
+    const module = modules.find(m => m.id === moduleId);
+    setSelectedModule(module);
     setSelectedGroup(null);
     setStudents([]);
-  }, [selectedModule]);
-
-  const handleMarkChange = (id, field, value) => {
-    setStudents((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, [field]: value } : s))
-    );
+    setMarks({});
   };
 
-  const handleSave = async (field) => {
-    if (!selectedModule) return;
-
-    setSaving((prev) => ({ ...prev, [field]: true }));
-    try {
-      const payload = students
-        .filter((s) => s[field] !== null && s[field] !== undefined)
-        .map((s) => ({
-          student_id: s.id,
-          module_id: selectedModule,
-          value: s[field],
-          type: field,
-          comment: "",
-        }));
-
-      await apiCall("post", "/api/notes/", payload, { token });
-
-      message.success(`${field.toUpperCase()} marks saved.`);
-    } catch {
-      message.error(`Failed to save ${field} marks.`);
-    } finally {
-      setSaving((prev) => ({ ...prev, [field]: false }));
-    }
+  const handleGroupChange = (groupId) => {
+    const group = groups.find(g => g.id === groupId);
+    setSelectedGroup(group);
+    setStudents([]);
+    setMarks({});
   };
 
-  const handleExportCSV = () => {
-    if (!students.length) {
-      message.warn("No data to export.");
+  const handleMarkChange = (studentId, type, value) => {
+    setMarks(prev => ({
+      ...prev,
+      [studentId]: {
+        ...prev[studentId],
+        [type]: value
+      }
+    }));
+  };
+
+  const saveMarks = async (type) => {
+    if (!selectedModule || !selectedGroup) {
+      message.error("Please select both module and group");
       return;
     }
-    const header = ["Student ID", "Name", "Test", "CC", "Exam"];
-    const rows = students.map((s) => [
-      s.id,
-      `${s.first_name || ""} ${s.last_name || s.name || ""}`,
-      s.test ?? "",
-      s.cc ?? "",
-      s.exam ?? "",
-    ]);
-    const csvContent = [header, ...rows].map((e) => e.join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `marks_${selectedModule || "group"}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+
+    try {
+      setSaving(prev => ({ ...prev, [type]: true }));
+
+      // Get all students with marks for the selected type
+      const studentsWithMarks = students.filter(student => {
+        const mark = marks[student.id]?.[type];
+        return mark !== undefined && mark !== "";
+      });
+
+      if (studentsWithMarks.length === 0) {
+        message.warning(`No marks to save for ${type}`);
+        return;
+      }
+
+      // Process each student's mark
+      for (const student of studentsWithMarks) {
+        const markValue = parseFloat(marks[student.id][type]);
+        const existingNote = previousNotes[student.id]?.[type.toLowerCase()];
+        
+        const noteData = {
+          student_id: student.id,
+          module_id: selectedModule.id,
+          teacher_id: teacherId,
+          value: markValue,
+          type: type.toLowerCase(),
+          comment: existingNote?.comment || ""
+        };
+
+        let response;
+        if (existingNote) {
+          // Update existing note with PATCH
+          response = await apiCall(
+            "PATCH",
+            `/api/notes/${existingNote.id}`,
+            noteData,
+            { token }
+          );
+        } else {
+          // Create new note with POST
+          response = await apiCall(
+            "POST",
+            "/api/notes/",
+            noteData,
+            { token }
+          );
+        }
+
+        if (!response.status) {
+          throw new Error(
+            response.message || 
+            `Failed to ${existingNote ? 'update' : 'save'} ${type} mark for student ${student.id}`
+          );
+        }
+
+        // Update the previous notes state with the new/updated note
+        setPreviousNotes(prev => ({
+          ...prev,
+          [student.id]: {
+            ...prev[student.id],
+            [type.toLowerCase()]: response.note
+          }
+        }));
+      }
+
+      message.success(`${type.toUpperCase()} marks ${existingNote ? 'updated' : 'saved'} successfully`);
+    } catch (error) {
+      console.error(`Error saving ${type} marks:`, error);
+      message.error(error.message || `Error saving ${type} marks`);
+    } finally {
+      setSaving(prev => ({ ...prev, [type]: false }));
+    }
   };
 
   const columns = [
-    { title: "Student ID", dataIndex: "id", key: "id" },
     {
-      title: "Name",
+      title: "Student Name",
+      dataIndex: "name",
       key: "name",
-      render: (_, s) => `${s.first_name || ""} ${s.last_name || s.name || ""}`,
+      render: (_, record) => `${record.first_name} ${record.last_name}`,
     },
     {
       title: (
-        <span>
-          Test&nbsp;
+        <div className="flex items-center justify-between">
+          <span>CC</span>
           <Button
+            type="primary"
             size="small"
-            onClick={() => handleSave("test")}
-            loading={saving.test}
-          >
-            Save
-          </Button>
-        </span>
-      ),
-      dataIndex: "test",
-      key: "test",
-      render: (_, r) => (
-        <InputNumber
-          min={0}
-          max={100}
-          value={r.test}
-          onChange={(v) => handleMarkChange(r.id, "test", v)}
-        />
-      ),
-    },
-    {
-      title: (
-        <span>
-          CC&nbsp;
-          <Button
-            size="small"
-            onClick={() => handleSave("cc")}
             loading={saving.cc}
+            onClick={() => saveMarks("cc")}
           >
             Save
           </Button>
-        </span>
+        </div>
       ),
       dataIndex: "cc",
       key: "cc",
-      render: (_, r) => (
-        <InputNumber
-          min={0}
-          max={100}
-          value={r.cc}
-          onChange={(v) => handleMarkChange(r.id, "cc", v)}
-        />
-      ),
+      render: (_, record) => {
+        const previousNote = previousNotes[record.id]?.cc;
+        return (
+          <div className="flex flex-col gap-1">
+            <Input
+              type="number"
+              min={0}
+              max={20}
+              step={0.5}
+              value={marks[record.id]?.cc}
+              onChange={(e) => handleMarkChange(record.id, "cc", e.target.value)}
+              placeholder="Enter CC mark"
+            />
+            {previousNote && (
+              <div className="text-xs text-gray-500">
+                Previous: {previousNote.value} 
+                {previousNote.comment && ` (${previousNote.comment})`}
+                <br />
+                <span className="text-gray-400">
+                  {new Date(previousNote.created_at).toLocaleDateString()}
+                </span>
+              </div>
+            )}
+          </div>
+        );
+      },
     },
     {
       title: (
-        <span>
-          Exam&nbsp;
+        <div className="flex items-center justify-between">
+          <span>Exam 1</span>
           <Button
+            type="primary"
             size="small"
-            onClick={() => handleSave("exam")}
-            loading={saving.exam}
+            loading={saving.exam1}
+            onClick={() => saveMarks("exam1")}
           >
             Save
           </Button>
-        </span>
+        </div>
       ),
-      dataIndex: "exam",
-      key: "exam",
-      render: (_, r) => (
-        <InputNumber
-          min={0}
-          max={100}
-          value={r.exam}
-          onChange={(v) => handleMarkChange(r.id, "exam", v)}
-        />
+      dataIndex: "exam1",
+      key: "exam1",
+      render: (_, record) => {
+        const previousNote = previousNotes[record.id]?.exam1;
+        return (
+          <div className="flex flex-col gap-1">
+            <Input
+              type="number"
+              min={0}
+              max={20}
+              step={0.5}
+              value={marks[record.id]?.exam1}
+              onChange={(e) => handleMarkChange(record.id, "exam1", e.target.value)}
+              placeholder="Enter Exam 1 mark"
+            />
+            {previousNote && (
+              <div className="text-xs text-gray-500">
+                Previous: {previousNote.value}
+                {previousNote.comment && ` (${previousNote.comment})`}
+                <br />
+                <span className="text-gray-400">
+                  {new Date(previousNote.created_at).toLocaleDateString()}
+                </span>
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      title: (
+        <div className="flex items-center justify-between">
+          <span>Exam 2</span>
+          <Button
+            type="primary"
+            size="small"
+            loading={saving.exam2}
+            onClick={() => saveMarks("exam2")}
+          >
+            Save
+          </Button>
+        </div>
       ),
+      dataIndex: "exam2",
+      key: "exam2",
+      render: (_, record) => {
+        const previousNote = previousNotes[record.id]?.exam2;
+        return (
+          <div className="flex flex-col gap-1">
+            <Input
+              type="number"
+              min={0}
+              max={20}
+              step={0.5}
+              value={marks[record.id]?.exam2}
+              onChange={(e) => handleMarkChange(record.id, "exam2", e.target.value)}
+              placeholder="Enter Exam 2 mark"
+            />
+            {previousNote && (
+              <div className="text-xs text-gray-500">
+                Previous: {previousNote.value}
+                {previousNote.comment && ` (${previousNote.comment})`}
+                <br />
+                <span className="text-gray-400">
+                  {new Date(previousNote.created_at).toLocaleDateString()}
+                </span>
+              </div>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
-  // Add static data for visualization
-  useEffect(() => {
-    // Static modules
-    setModules([
-      { id: "m1", name: "Mathematics", groups: [{ id: "g1", name: "Group A" }] },
-      { id: "m2", name: "Physics", groups: [{ id: "g2", name: "Group B" }] },
-    ]);
-
-    // Static groups
-    setGroups([
-      { id: "g1", name: "Group A" },
-      { id: "g2", name: "Group B" },
-    ]);
-
-    // Static students
-    setStudents([
-      { id: "s1", first_name: "John", last_name: "Doe", test: 85, cc: 90, exam: 88 },
-      { id: "s2", first_name: "Jane", last_name: "Smith", test: 78, cc: 82, exam: 80 },
-      { id: "s3", first_name: "Alice", last_name: "Johnson", test: 92, cc: 95, exam: 94 },
-    ]);
-  }, []);
-
   return (
-    <Card title="Enter Student Marks">
-      <div style={{ marginBottom: 16, display: "flex", gap: 16 }}>
-        <Select
-          placeholder="Select Module"
-          style={{ width: 240 }}
-          options={modules.map((m) => ({ label: m.name, value: m.id }))}
-          value={selectedModule}
-          onChange={(val) => setSelectedModule(val)}
-        />
-        <Select
-          placeholder="Select Group"
-          style={{ width: 240 }}
-          options={
-            selectedModule
-              ? groups
-                  .filter((g) =>
-                    modules
-                      .find((m) => m.id === selectedModule)
-                      ?.groups?.some((mg) => mg.id === g.id)
-                  )
-                  .map((g) => ({ label: g.name, value: g.id }))
-              : []
-          }
-          value={selectedGroup}
-          onChange={(val) => setSelectedGroup(val)}
-          disabled={!selectedModule}
-        />
-        <Button onClick={handleExportCSV} disabled={!students.length}>
-          Export CSV
-        </Button>
-      </div>
-      <Table
-        dataSource={students}
-        columns={columns}
-        rowKey="id"
-        loading={loadingStudents}
-        pagination={false}
-        bordered
-      />
-    </Card>
+    <div className="p-6">
+      <Card title="Manage Marks" className="mb-6">
+        <div className="flex gap-4 mb-6">
+          <Select
+            style={{ width: 200 }}
+            placeholder="Select Module"
+            value={selectedModule?.id}
+            onChange={handleModuleChange}
+            loading={loading}
+          >
+            {modules.map((module) => (
+              <Option key={module.id} value={module.id}>
+                {module.name}
+              </Option>
+            ))}
+          </Select>
+
+          <Select
+            style={{ width: 200 }}
+            placeholder="Select Group"
+            value={selectedGroup?.id}
+            onChange={handleGroupChange}
+            loading={loading}
+            disabled={!selectedModule}
+          >
+            {groups.map((group) => (
+              <Option key={group.id} value={group.id}>
+                {group.name}
+              </Option>
+            ))}
+          </Select>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center p-8">
+            <Spin size="large" />
+          </div>
+        ) : selectedGroup && students && students.length > 0 ? (
+          <Table
+            columns={columns}
+            dataSource={students}
+            rowKey="id"
+            pagination={false}
+          />
+        ) : selectedGroup ? (
+          <div className="text-center text-gray-500 p-4">
+            No students found in this group
+          </div>
+        ) : null}
+      </Card>
+    </div>
   );
 }

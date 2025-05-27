@@ -88,17 +88,11 @@ const DashboardLayout = ({ children }) => {
       label: "Sons schedule",
       href: "/teacher/schedule",
     },
-    {
-      key: "attendance",
-      icon: <Group />,
-      label: "Attendance",
-      href: "/teacher/marks",
-    },
-        {
+      {
       key: "attendance",
       icon: <Notebook />,
       label: "Add Marks",
-      href: "/teacher/attendance",
+      href: "/teacher/marks",
     },
     {
       key: "profile",
