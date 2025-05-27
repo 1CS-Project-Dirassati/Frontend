@@ -9,7 +9,7 @@ import LevelSelector from "./components/LevelSelector";
 import TrimesterForm from "./components/TrimesterForm";
 import GroupSelector from "./components/GroupSelector";
 import ScheduleBuilder from "./components/ScheduleBuilder";
-import { translations } from "./utils/translations";
+//import { translations } from "./utils/translations";
 import { useRouter } from "next/navigation";
 
 const steps = [
@@ -123,8 +123,8 @@ export default function CreateSchedule() {
               <div
                 className={`flex items-center justify-center w-8 h-8 rounded-full ${
                   index <= currentStep
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
+                    ? "bg-primary-light text-primary-foreground"
+                    : "bg-secondary"
                 }`}
               >
                 {index + 1}
@@ -132,7 +132,7 @@ export default function CreateSchedule() {
               {index !== steps.length - 1 && (
                 <div
                   className={`flex-1 h-1 mx-2 ${
-                    index < currentStep ? "bg-primary" : "bg-muted"
+                    index < currentStep ? "bg-primary-light" : "bg-secondary"
                   }`}
                 />
               )}

@@ -41,176 +41,8 @@ import { message } from "antd";
 import { useSelector } from "react-redux";
 import apiCall from "@/components/utils/apiCall";
 
-// Translation object for Arabic and French
-const translations = {
-  ar: {
-    title: "مجموعات الطلاب",
-    level: "المستوى",
-    group: "المجموعة",
-    search: "بحث",
-    searchPlaceholder: "ابحث بالاسم أو البريد أو الرقم الوطني...",
-    assignGroup: "تعيين إلى مجموعة",
-    unassigned: "غير معين",
-    newGroup: "إنشاء مجموعة جديدة",
-    addStudent: "إضافة طالب",
-    createGroup: "إنشاء مجموعة",
-    bulkAssign: "تعيين جماعي للمجموعة",
-    exportCSV: "تصدير CSV",
-    totalStudents: "إجمالي الطلاب",
-    assignedStudents: "معينون للمجموعات",
-    unassignedStudents: "غير معينون",
-    allAssignedStudents: "جميع الطلاب المعينين",
-    groupStudents: "الطلاب",
-    unassignedStudentsTitle: "الطلاب غير المعينين",
-    noStudents: "لا يوجد طلاب",
-    studentsCount: (count) => `${count} ${count === 1 ? "طالب" : "طلاب"}`,
-    selectedStudents: (count) =>
-      `${count} طالب${count > 1 ? " تم اختيارهم" : " تم اختياره"}`,
-    addStudentTitle: "إضافة طالب جديد",
-    editStudentTitle: "تعديل الطالب",
-    createGroupTitle: "إنشاء مجموعة جديدة",
-    firstName: "الاسم الأول",
-    lastName: "الاسم الأخير",
-    email: "البريد الإلكتروني",
-    dob: "تاريخ الميلاد",
-    nationalId: "الرقم الوطني",
-    gender: "الجنس",
-    levelSelect: "المستوى",
-    groupSelect: "المجموعة (اختياري)",
-    parent: "الوالد",
-    cancel: "إلغاء",
-    addStudentBtn: "إضافة طالب",
-    saveChanges: "حفظ التغييرات",
-    createGroupBtn: "إنشاء المجموعة",
-    createAndAssign: "إنشاء وتعيين",
-    deleteConfirmTitle: "تأكيد الحذف",
-    deleteConfirmText:
-      "هل أنت متأكد من أنك تريد حذف هذا الطالب؟ لا يمكن التراجع عن هذا الإجراء.",
-    delete: "حذف",
-    loading: "جارٍ التحميل...",
-    groupName: "اسم المجموعة",
-    teacher: "المعلم (اختياري)",
-    none: "لا شيء",
-    male: "ذكر",
-    female: "أنثى",
-    namePlaceholder: "مثال: أمينة",
-    lastNamePlaceholder: "مثال: بوشامة",
-    emailPlaceholder: "مثال: amina@example.dz",
-    nationalIdPlaceholder: "مثال: 1234567890",
-    groupNamePlaceholder: "مثال: مجموعة الرياضيات أ",
-    dragGroupNamePlaceholder: "مثال: مجموعة العلوم ب",
-    errors: {
-      required: (field) => `يرجى ملء حقل ${field}.`,
-      invalidEmail: "يرجى إدخال بريد إلكتروني صالح.",
-      invalidDob: "يرجى إدخال تاريخ ميلاد صالح (YYYY-MM-DD).",
-      invalidNationalId: "الرقم الوطني يجب أن يكون 10 أرقام.",
-      invalidGender: "الجنس يجب أن يكون 'ذكر' أو 'أنثى'.",
-      groupExists: "المجموعة موجودة بالفعل.",
-      invalidTeacher: "المعلم المحدد غير صالح.",
-      invalidLevel: "المستوى المحدد غير صالح.",
-      invalidGroup: "المجموعة المحددة غير صالحة.",
-      addStudentFailed: "فشل إضافة الطالب.",
-      updateStudentFailed: "فشل تحديث الطالب.",
-      deleteStudentFailed: "فشل حذف الطالب.",
-      addGroupFailed: "فشل إنشاء المجموعة.",
-      loadDataFailed: "فشل تحميل بيانات الطلاب.",
-      bulkAssignFailed: "فشل تعيين الطلاب.",
-    },
-    success: {
-      addStudent: "تم إضافة الطالب بنجاح!",
-      updateStudent: "تم تحديث الطالب بنجاح!",
-      deleteStudent: "تم حذف الطالب بنجاح!",
-      addGroup: (name) => `تم إنشاء المجموعة ${name} بنجاح!`,
-      bulkAssign: "تم تعيين الطلاب بنجاح!",
-      exportCSV: "تم تصدير CSV بنجاح!",
-    },
-  },
-  fr: {
-    title: "Groupes d'étudiants",
-    level: "Niveau",
-    group: "Groupe",
-    search: "Rechercher",
-    searchPlaceholder: "Rechercher par nom, email ou numéro national...",
-    assignGroup: "Affecter à un groupe",
-    unassigned: "Non affecté",
-    newGroup: "Créer un nouveau groupe",
-    addStudent: "Ajouter un étudiant",
-    createGroup: "Créer un groupe",
-    bulkAssign: "Affectation groupée au groupe",
-    exportCSV: "Exporter en CSV",
-    totalStudents: "Total des étudiants",
-    assignedStudents: "Affectés aux groupes",
-    unassignedStudents: "Non affectés",
-    allAssignedStudents: "Tous les étudiants affectés",
-    groupStudents: "Étudiants",
-    unassignedStudentsTitle: "Étudiants non affectés",
-    noStudents: "Aucun étudiant",
-    studentsCount: (count) => `${count} étudiant${count > 1 ? "s" : ""}`,
-    selectedStudents: (count) =>
-      `${count} étudiant${count > 1 ? "s sélectionnés" : " sélectionné"}`,
-    addStudentTitle: "Ajouter un nouvel étudiant",
-    editStudentTitle: "Modifier l'étudiant",
-    createGroupTitle: "Créer un nouveau groupe",
-    firstName: "Prénom",
-    lastName: "Nom de famille",
-    email: "Email",
-    dob: "Date de naissance",
-    nationalId: "Numéro national",
-    gender: "Genre",
-    levelSelect: "Niveau",
-    groupSelect: "Groupe (facultatif)",
-    parent: "Parent",
-    cancel: "Annuler",
-    addStudentBtn: "Ajouter l'étudiant",
-    saveChanges: "Enregistrer les modifications",
-    createGroupBtn: "Créer le groupe",
-    createAndAssign: "Créer et affecter",
-    deleteConfirmTitle: "Confirmer la suppression",
-    deleteConfirmText:
-      "Êtes-vous sûr de vouloir supprimer cet étudiant ? Cette action est irréversible.",
-    delete: "Supprimer",
-    loading: "Chargement...",
-    groupName: "Nom du groupe",
-    teacher: "Enseignant (facultatif)",
-    none: "Aucun",
-    male: "Homme",
-    female: "Femme",
-    namePlaceholder: "Exemple : Amina",
-    lastNamePlaceholder: "Exemple : Bouchama",
-    emailPlaceholder: "Exemple : amina@example.dz",
-    nationalIdPlaceholder: "Exemple : 1234567890",
-    groupNamePlaceholder: "Exemple : Groupe Mathématiques A",
-    dragGroupNamePlaceholder: "Exemple : Groupe Sciences B",
-    errors: {
-      required: (field) => `Veuillez remplir le champ ${field}.`,
-      invalidEmail: "Veuillez entrer un email valide.",
-      invalidDob: "Veuillez entrer une date de naissance valide (YYYY-MM-DD).",
-      invalidNationalId: "Le numéro national doit comporter 10 chiffres.",
-      invalidGender: "Le genre doit être 'Homme' ou 'Femme'.",
-      groupExists: "Le groupe existe déjà.",
-      invalidTeacher: "L'enseignant sélectionné est invalide.",
-      invalidLevel: "Le niveau sélectionné est invalide.",
-      invalidGroup: "Le groupe sélectionné est invalide.",
-      addStudentFailed: "Échec de l'ajout de l'étudiant.",
-      updateStudentFailed: "Échec de la mise à jour de l'étudiant.",
-      deleteStudentFailed: "Échec de la suppression de l'étudiant.",
-      addGroupFailed: "Échec de la création du groupe.",
-      loadDataFailed: "Échec du chargement des données des étudiants.",
-      bulkAssignFailed: "Échec de l'affectation des étudiants.",
-    },
-    success: {
-      addStudent: "Étudiant ajouté avec succès !",
-      updateStudent: "Étudiant mis à jour avec succès !",
-      deleteStudent: "Étudiant supprimé avec succès !",
-      addGroup: (name) => `Groupe ${name} créé avec succès !`,
-      bulkAssign: "Étudiants affectés avec succès !",
-      exportCSV: "Exportation CSV réussie !",
-    },
-  },
-};
-
 // Droppable Group Component
-const DroppableGroup = ({ id, label, levelName, teacherName, isActive, t }) => {
+const DroppableGroup = ({ id, label, levelName, teacherName, isActive }) => {
   return (
     <div
       className={`p-3 rounded-lg border-2 transition-colors ${
@@ -222,14 +54,10 @@ const DroppableGroup = ({ id, label, levelName, teacherName, isActive, t }) => {
     >
       <p className="font-semibold text-text">{label}</p>
       {levelName && (
-        <p className="text-sm text-text-muted">
-          {t.level}: {levelName}
-        </p>
+        <p className="text-sm text-text-muted">Level: {levelName}</p>
       )}
       {teacherName && (
-        <p className="text-sm text-text-muted">
-          {t.teacher.replace(" (facultatif)", "")}: {teacherName}
-        </p>
+        <p className="text-sm text-text-muted">Teacher: {teacherName}</p>
       )}
     </div>
   );
@@ -312,7 +140,6 @@ const StudentList = ({
   onSelect,
   bulkSelected,
   activeStudent,
-  t,
 }) => {
   if (!students || !Array.isArray(students)) {
     return (
@@ -320,13 +147,11 @@ const StudentList = ({
         <CardHeader>
           <CardTitle className="text-lg font-semibold text-text flex justify-between items-center">
             {title}
-            <Badge className="bg-primary text-text-inverted">
-              {t.studentsCount(0)}
-            </Badge>
+            <Badge className="bg-primary text-text-inverted">0 students</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-text-muted text-center">{t.noStudents}</p>
+          <p className="text-text-muted text-center">No students</p>
         </CardContent>
       </Card>
     );
@@ -338,7 +163,7 @@ const StudentList = ({
         <CardTitle className="text-lg font-semibold text-text flex justify-between items-center">
           {title}
           <Badge className="bg-primary text-text-inverted">
-            {t.studentsCount(students.length)}
+            {students.length} {students.length === 1 ? "student" : "students"}
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -361,7 +186,7 @@ const StudentList = ({
                 />
               ))
             ) : (
-              <p className="text-text-muted text-center">{t.noStudents}</p>
+              <p className="text-text-muted text-center">No students</p>
             )}
           </div>
         </SortableContext>
@@ -406,43 +231,58 @@ export default function StudentsGroups() {
   const [isNewGroupPromptOpen, setIsNewGroupPromptOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [language, setLanguage] = useState("fr");
   const token = useSelector((state) => state.auth.accessToken);
-
-  // Translation function
-  const t = translations[language];
 
   // Data Fetching and Manipulation Functions
   const getStudents = async () => {
     try {
-      const response = await apiCall("get", "/api/students/", null, { token });
-      message.success(t.success.loadData);
+      const params = new URLSearchParams({
+        is_approved: "1",
+        archived: "0",
+        page: "1",
+        per_page: "100",
+      });
+      if (levelFilter !== "All") params.append("level_id", levelFilter);
+      if (groupFilter !== "All" && groupFilter !== "unassigned") {
+        params.append("group_id", groupFilter);
+      } else if (groupFilter === "unassigned") {
+        params.append("group_id", "0");
+      }
+      const response = await apiCall(
+        "get",
+        `/api/students/?${params.toString()}`,
+        null,
+        { token }
+      );
+      message.success("Data loaded successfully");
       return response.students || response;
     } catch (err) {
-      message.error(t.errors.loadDataFailed);
+      message.error("Failed to load student data");
       throw err;
     }
   };
 
   const updateStudent = async (id, values) => {
     try {
-      console.log(`Updating student ${id} with payload:`, values);
       await apiCall("put", `/api/students/${id}`, values, { token });
-      message.success(t.success.updateStudent);
+      message.success("Student updated successfully");
     } catch (err) {
-      console.error("Update student error:", err.response || err);
-      message.error(err.response?.message || t.errors.updateStudentFailed);
+      message.error("Failed to update student");
       throw err;
     }
   };
 
   const getGroups = async () => {
     try {
-      const response = await apiCall("get", "/api/groups/", null, { token });
-      message.success(t.success.loadData);
+      const response = await apiCall(
+        "get",
+        "/api/groups/?per_page=1000",
+        null,
+        { token }
+      );
       return response.groups || response;
     } catch (err) {
-      message.error(t.errors.loadDataFailed);
+      message.error("Failed to load group data");
       throw err;
     }
   };
@@ -450,10 +290,9 @@ export default function StudentsGroups() {
   const getLevels = async () => {
     try {
       const response = await apiCall("get", "/api/levels/", null, { token });
-      message.success(t.success.loadData);
       return response.levels || response;
     } catch (err) {
-      message.error(t.errors.loadDataFailed);
+      message.error("Failed to load level data");
       throw err;
     }
   };
@@ -461,10 +300,9 @@ export default function StudentsGroups() {
   const getParents = async () => {
     try {
       const response = await apiCall("get", "/api/parents/", null, { token });
-      message.success(t.success.loadData);
       return response.parents || response;
     } catch (err) {
-      message.error(t.errors.loadDataFailed);
+      message.error("Failed to load parent data");
       throw err;
     }
   };
@@ -472,25 +310,22 @@ export default function StudentsGroups() {
   const getTeachers = async () => {
     try {
       const response = await apiCall("get", "/api/teachers/", null, { token });
-      message.success(t.success.loadData);
       return response.teachers || response;
     } catch (err) {
-      message.error(t.errors.loadDataFailed);
+      message.error("Failed to load teacher data");
       throw err;
     }
   };
 
   const addGroup = async (groupData) => {
     try {
-      console.log("Creating group with payload:", groupData);
       const response = await apiCall("post", "/api/groups/", groupData, {
         token,
       });
-      message.success(t.success.addGroup(groupData.name));
-      return response; // Return the new group data
+      message.success(`Group ${groupData.name} created successfully`);
+      return response;
     } catch (err) {
-      console.error("Add group error:", err.response || err);
-      message.error(err.response?.message || t.errors.addGroupFailed);
+      message.error("Failed to create group");
       throw err;
     }
   };
@@ -498,9 +333,9 @@ export default function StudentsGroups() {
   const deleteStudent = async (id) => {
     try {
       await apiCall("delete", `/api/students/${id}`, null, { token });
-      message.success(t.success.deleteStudent);
+      message.success("Student deleted successfully");
     } catch (err) {
-      message.error(t.errors.deleteStudentFailed);
+      message.error("Failed to delete student");
       throw err;
     }
   };
@@ -508,14 +343,14 @@ export default function StudentsGroups() {
   const addStudent = async (studentData) => {
     try {
       await apiCall("post", "/api/students/", studentData, { token });
-      message.success(t.success.addStudent);
+      message.success("Student added successfully");
     } catch (err) {
-      message.error(t.errors.addStudentFailed);
+      message.error("Failed to add student");
       throw err;
     }
   };
 
-  // Initial Data Fetch
+  // Initial Data Fetch and Refetch on Filter Change
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
@@ -533,47 +368,35 @@ export default function StudentsGroups() {
           getParents(),
           getTeachers(),
         ]);
-        console.log("Fetched Data:", {
-          studentsData,
-          groupsData,
-          levelsData,
-          parentsData,
-          teachersData,
-        });
         setStudents(Array.isArray(studentsData) ? studentsData : []);
         setGroups(Array.isArray(groupsData) ? groupsData : []);
         setLevels(Array.isArray(levelsData) ? levelsData : []);
         setParents(Array.isArray(parentsData) ? parentsData : []);
         setTeachers(Array.isArray(teachersData) ? teachersData : []);
       } catch (error) {
-        console.error("Failed to load data:", error);
-        message.error(t.errors.loadDataFailed);
+        message.error("Failed to load data");
       } finally {
         setIsLoading(false);
       }
     };
     fetchData();
-  }, [t]);
+  }, [levelFilter, groupFilter]);
 
   const filteredStudents = useMemo(() => {
     if (!students || !Array.isArray(students)) return [];
     return students.filter((student) => {
-      const matchesLevel =
-        levelFilter === "All" || student.level_id === Number(levelFilter);
       const matchesSearch =
         student.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         student.last_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         student.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         student.national_id?.includes(searchQuery);
-      return matchesLevel && matchesSearch && student.is_active !== false;
+      return matchesSearch && student.is_active !== false;
     });
-  }, [students, levelFilter, searchQuery]);
+  }, [students, searchQuery]);
 
   const groupStudents = useMemo(() => {
     return filteredStudents.filter(
-      (s) =>
-        s.group_id &&
-        (groupFilter === "All" || s.group_id === Number(groupFilter))
+      (s) => s.group_id && groupFilter !== "unassigned"
     );
   }, [filteredStudents, groupFilter]);
 
@@ -587,23 +410,29 @@ export default function StudentsGroups() {
     return { total, assigned, unassigned: total - assigned };
   }, [filteredStudents]);
 
+  const availableGroups = useMemo(() => {
+    if (!newStudent.level_id && !editStudent?.level_id) return groups;
+    const levelId = Number(newStudent.level_id || editStudent?.level_id);
+    return groups.filter((g) => g.level_id === levelId);
+  }, [groups, newStudent.level_id, editStudent]);
+
   const addStudentHandler = useCallback(() => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
     const requiredFields = [
-      { key: "first_name", label: t.firstName },
-      { key: "last_name", label: t.lastName },
-      { key: "email", label: t.email },
-      { key: "level_id", label: t.levelSelect },
-      { key: "parent_id", label: t.parent },
-      { key: "date_of_birth", label: t.dob },
-      { key: "national_id", label: t.nationalId },
-      { key: "gender", label: t.gender },
+      { key: "first_name", label: "First Name" },
+      { key: "last_name", label: "Last Name" },
+      { key: "email", label: "Email" },
+      { key: "level_id", label: "Level" },
+      { key: "parent_id", label: "Parent" },
+      { key: "date_of_birth", label: "Date of Birth" },
+      { key: "national_id", label: "National ID" },
+      { key: "gender", label: "Gender" },
     ];
     for (const field of requiredFields) {
       if (!newStudent[field.key]?.trim()) {
-        message.error(t.errors.required(field.label));
+        message.error(`Please fill in ${field.label}`);
         setIsSubmitting(false);
         return;
       }
@@ -611,27 +440,49 @@ export default function StudentsGroups() {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(newStudent.email)) {
-      message.error(t.errors.invalidEmail);
+      message.error("Please enter a valid email");
       setIsSubmitting(false);
       return;
     }
 
     const dobRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dobRegex.test(newStudent.date_of_birth)) {
-      message.error(t.errors.invalidDob);
+      message.error("Please enter a valid date of birth (YYYY-MM-DD)");
       setIsSubmitting(false);
       return;
     }
 
     const nationalIdRegex = /^\d{10}$/;
     if (!nationalIdRegex.test(newStudent.national_id)) {
-      message.error(t.errors.invalidNationalId);
+      message.error("National ID must be 10 digits");
       setIsSubmitting(false);
       return;
     }
 
     if (!["M", "F"].includes(newStudent.gender)) {
-      message.error(t.errors.invalidGender);
+      message.error("Gender must be 'Male' or 'Female'");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const level = levels.find((l) => l.id === Number(newStudent.level_id));
+    if (!level) {
+      message.error("Invalid level selected");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const group =
+      newStudent.group_id && newStudent.group_id !== "none"
+        ? groups.find((g) => g.id === Number(newStudent.group_id))
+        : null;
+    if (newStudent.group_id && newStudent.group_id !== "none" && !group) {
+      message.error("Invalid group selected");
+      setIsSubmitting(false);
+      return;
+    }
+    if (group && group.level_id !== Number(newStudent.level_id)) {
+      message.error("Group level must match student level");
       setIsSubmitting(false);
       return;
     }
@@ -654,9 +505,7 @@ export default function StudentsGroups() {
     };
 
     addStudent(student)
-      .then(() => {
-        return getStudents();
-      })
+      .then(() => getStudents())
       .then((updatedStudents) => {
         setStudents(updatedStudents);
         setNewStudent({
@@ -678,7 +527,7 @@ export default function StudentsGroups() {
       .finally(() => {
         setIsSubmitting(false);
       });
-  }, [newStudent, isSubmitting, t]);
+  }, [newStudent, isSubmitting, levels, groups]);
 
   const editStudentGroup = useCallback(() => {
     if (!editStudent || isSubmitting) return;
@@ -686,7 +535,7 @@ export default function StudentsGroups() {
 
     const level = levels.find((l) => l.id === Number(editStudent.level_id));
     if (!level) {
-      message.error(t.errors.invalidLevel);
+      message.error("Invalid level selected");
       setIsSubmitting(false);
       return;
     }
@@ -696,7 +545,12 @@ export default function StudentsGroups() {
         ? groups.find((g) => g.id === Number(editStudent.group_id))
         : null;
     if (editStudent.group_id !== "none" && !group) {
-      message.error(t.errors.invalidGroup);
+      message.error("Invalid group selected");
+      setIsSubmitting(false);
+      return;
+    }
+    if (group && group.level_id !== Number(editStudent.level_id)) {
+      message.error("Group level must match student level");
       setIsSubmitting(false);
       return;
     }
@@ -710,26 +564,20 @@ export default function StudentsGroups() {
       docs_url: editStudent.docs_url || "",
     };
 
-    console.log("Updating student with payload:", updates);
-
     updateStudent(editStudent.id, updates)
-      .then(() => {
-        return getStudents();
-      })
+      .then(() => getStudents())
       .then((updatedStudents) => {
         setStudents(updatedStudents);
         setEditStudent(null);
         setIsEditStudentOpen(false);
-        message.success(t.success.updateStudent);
       })
       .catch((error) => {
-        console.error("Failed to update student:", error.response || error);
-        message.error(error.response?.message || t.errors.updateStudentFailed);
+        message.error("Failed to update student");
       })
       .finally(() => {
         setIsSubmitting(false);
       });
-  }, [editStudent, isSubmitting, levels, groups, t]);
+  }, [editStudent, isSubmitting, levels, groups]);
 
   const handleDeleteStudent = useCallback((id) => {
     setDeleteId(id);
@@ -741,9 +589,7 @@ export default function StudentsGroups() {
     setIsSubmitting(true);
 
     deleteStudent(deleteId)
-      .then(() => {
-        return getStudents();
-      })
+      .then(() => getStudents())
       .then((updatedStudents) => {
         setStudents(updatedStudents);
         setBulkSelected((prev) => prev.filter((sid) => sid !== deleteId));
@@ -756,16 +602,14 @@ export default function StudentsGroups() {
       .finally(() => {
         setIsSubmitting(false);
       });
-  }, [deleteId, isSubmitting, t]);
+  }, [deleteId, isSubmitting]);
 
   const addGroupHandler = useCallback(() => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
     if (!newGroup.name.trim() || !newGroup.level_id) {
-      message.error(
-        t.errors.required(t.groupName) + " " + t.errors.required(t.level)
-      );
+      message.error("Please fill in Group Name and Level");
       setIsSubmitting(false);
       return;
     }
@@ -776,14 +620,14 @@ export default function StudentsGroups() {
         (g) => g.name.toLowerCase() === trimmedGroupName.toLowerCase()
       )
     ) {
-      message.error(t.errors.groupExists);
+      message.error("Group already exists");
       setIsSubmitting(false);
       return;
     }
 
     const level = levels.find((l) => l.id === Number(newGroup.level_id));
     if (!level) {
-      message.error(t.errors.invalidLevel);
+      message.error("Invalid level selected");
       setIsSubmitting(false);
       return;
     }
@@ -792,7 +636,7 @@ export default function StudentsGroups() {
       newGroup.teacher_id !== "none" &&
       teachers.find((t) => t.id === Number(newGroup.teacher_id));
     if (newGroup.teacher_id !== "none" && !teacher) {
-      message.error(t.errors.invalidTeacher);
+      message.error("Invalid teacher selected");
       setIsSubmitting(false);
       return;
     }
@@ -804,12 +648,18 @@ export default function StudentsGroups() {
         newGroup.teacher_id === "none" ? null : Number(newGroup.teacher_id),
     };
 
-    console.log("Creating group with payload:", group);
-
     addGroup(group)
       .then((newGroupResponse) => {
         setGroups((prev) => [...prev, newGroupResponse]);
         if (bulkSelected.length > 0) {
+          const invalidStudents = bulkSelected
+            .map((id) => students.find((s) => s.id === id))
+            .filter((s) => s && s.level_id !== Number(newGroup.level_id));
+          if (invalidStudents.length > 0) {
+            message.error("Some selected students have mismatched levels");
+            setIsSubmitting(false);
+            return Promise.reject();
+          }
           return Promise.all(
             bulkSelected.map((id) => {
               const student = students.find((s) => s.id === id);
@@ -830,12 +680,8 @@ export default function StudentsGroups() {
         setNewGroup({ name: "", level_id: "", teacher_id: "" });
         setBulkSelected([]);
         setIsAddGroupOpen(false);
-        message.success(t.success.addGroup(trimmedGroupName));
       })
-      .catch((error) => {
-        console.error("Failed to add group:", error.response || error);
-        message.error(error.response?.message || t.errors.addGroupFailed);
-      })
+      .catch(() => {})
       .finally(() => {
         setIsSubmitting(false);
       });
@@ -847,7 +693,6 @@ export default function StudentsGroups() {
     levels,
     teachers,
     students,
-    t,
   ]);
 
   const addGroupFromDrag = useCallback(() => {
@@ -855,23 +700,27 @@ export default function StudentsGroups() {
     setIsSubmitting(true);
 
     if (!newGroup.name.trim() || !newGroup.level_id) {
-      message.error(
-        t.errors.required(t.groupName) + " " + t.errors.required(t.level)
-      );
+      message.error("Please fill in Group Name and Level");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (Number(newGroup.level_id) !== activeStudent.level_id) {
+      message.error("Group level must match student level");
       setIsSubmitting(false);
       return;
     }
 
     const trimmedGroupName = newGroup.name.trim();
     if (groups.some((g) => g.name === trimmedGroupName)) {
-      message.error(t.errors.groupExists);
+      message.error("Group already exists");
       setIsSubmitting(false);
       return;
     }
 
     const level = levels.find((l) => l.id === Number(newGroup.level_id));
     if (!level) {
-      message.error(t.errors.invalidLevel);
+      message.error("Invalid level selected");
       setIsSubmitting(false);
       return;
     }
@@ -880,7 +729,7 @@ export default function StudentsGroups() {
       newGroup.teacher_id !== "none" &&
       teachers.find((t) => t.id === Number(newGroup.teacher_id));
     if (newGroup.teacher_id !== "none" && !teacher) {
-      message.error(t.errors.invalidTeacher);
+      message.error("Invalid teacher selected");
       setIsSubmitting(false);
       return;
     }
@@ -891,8 +740,6 @@ export default function StudentsGroups() {
       teacher_id:
         newGroup.teacher_id === "none" ? null : Number(newGroup.teacher_id),
     };
-
-    console.log("Creating group from drag with payload:", group);
 
     addGroup(group)
       .then((newGroupResponse) => {
@@ -918,19 +765,14 @@ export default function StudentsGroups() {
         setNewGroup({ name: "", level_id: "", teacher_id: "" });
         setIsNewGroupPromptOpen(false);
         setActiveStudent(null);
-        message.success(t.success.addGroup(trimmedGroupName));
       })
       .catch((error) => {
-        console.error(
-          "Failed to add group from drag:",
-          error.response || error
-        );
-        message.error(error.response?.message || t.errors.addGroupFailed);
+        console.error("Failed to add group from drag:", error);
       })
       .finally(() => {
         setIsSubmitting(false);
       });
-  }, [newGroup, activeStudent, groups, isSubmitting, levels, teachers, t]);
+  }, [newGroup, activeStudent, groups, isSubmitting, levels, teachers]);
 
   const handleDragStart = useCallback(
     (event) => {
@@ -960,6 +802,14 @@ export default function StudentsGroups() {
       }
       const targetGroupId =
         over.id === "unassigned" ? 0 : Number(over.id.split("-")[1]);
+      const group = targetGroupId
+        ? groups.find((g) => g.id === targetGroupId)
+        : null;
+      if (group && group.level_id !== student.level_id) {
+        message.error("Cannot assign to group with different level");
+        setActiveStudent(null);
+        return;
+      }
       if (targetGroupId === 0 || groups.some((g) => g.id === targetGroupId)) {
         if (student.group_id !== targetGroupId) {
           updateStudent(student.id, {
@@ -969,36 +819,25 @@ export default function StudentsGroups() {
             group_id: targetGroupId,
             docs_url: student.docs_url || "",
           })
-            .then(() => {
-              return getStudents();
-            })
+            .then(() => getStudents())
             .then((updatedStudents) => {
               setStudents(updatedStudents);
-              message.success(t.success.updateStudent);
+              message.success("Student reassigned successfully");
             })
             .catch((error) => {
-              console.error(
-                "Failed to reassign student:",
-                error.response || error
-              );
-              message.error(
-                error.response?.message || t.errors.updateStudentFailed
-              );
+              message.error("Failed to reassign student");
             });
         }
       }
       setActiveStudent(null);
     },
-    [students, groups, t]
+    [students, groups]
   );
 
   const toggleSelectStudent = useCallback((id) => {
-    setBulkSelected((prev) => {
-      const newSelected = prev.includes(id)
-        ? prev.filter((sid) => sid !== id)
-        : [...prev, id];
-      return newSelected;
-    });
+    setBulkSelected((prev) =>
+      prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id]
+    );
   }, []);
 
   const bulkAssignGroup = useCallback(
@@ -1007,6 +846,18 @@ export default function StudentsGroups() {
       setIsSubmitting(true);
 
       const targetGroupId = groupId === "unassigned" ? 0 : Number(groupId);
+      const group = targetGroupId
+        ? groups.find((g) => g.id === targetGroupId)
+        : null;
+      const invalidStudents = bulkSelected
+        .map((id) => students.find((s) => s.id === id))
+        .filter((s) => s && group && s.level_id !== group.level_id);
+      if (invalidStudents.length > 0) {
+        message.error("Some selected students have mismatched levels");
+        setIsSubmitting(false);
+        return;
+      }
+
       if (targetGroupId === 0 || groups.some((g) => g.id === targetGroupId)) {
         Promise.all(
           bulkSelected.map((id) => {
@@ -1023,43 +874,40 @@ export default function StudentsGroups() {
             });
           })
         )
-          .then(() => {
-            return getStudents();
-          })
+          .then(() => getStudents())
           .then((updatedStudents) => {
             setStudents(updatedStudents);
             setBulkSelected([]);
-            message.success(t.success.bulkAssign);
+            message.success("Students assigned successfully");
           })
-          .catch((error) => {
-            console.error("Failed to bulk assign:", error.response || error);
-            message.error(error.response?.message || t.errors.bulkAssignFailed);
+          .catch(() => {
+            message.error("Failed to assign students");
           })
           .finally(() => {
             setIsSubmitting(false);
           });
       } else {
-        message.error(t.errors.invalidGroup);
+        message.error("Invalid group selected");
         setIsSubmitting(false);
       }
     },
-    [bulkSelected, isSubmitting, groups, students, t]
+    [bulkSelected, isSubmitting, groups, students]
   );
 
   const exportCSV = useCallback(() => {
     const headers = [
-      t.id,
-      t.firstName,
-      t.lastName,
-      t.email,
-      t.level,
-      t.group,
-      t.parent,
-      t.approved,
-      t.dob,
-      t.nationalId,
-      t.gender,
-      t.enrollmentDate,
+      "ID",
+      "First Name",
+      "Last Name",
+      "Email",
+      "Level",
+      "Group",
+      "Parent",
+      "Approved",
+      "Date of Birth",
+      "National ID",
+      "Gender",
+      "Enrollment Date",
     ];
     const rows = filteredStudents.map((s) => [
       s.id,
@@ -1067,24 +915,24 @@ export default function StudentsGroups() {
       s.last_name,
       s.email,
       levels.find((l) => l.id === s.level_id)?.name || "N/A",
-      groups.find((g) => g.id === s.group_id)?.name || t.unassigned,
+      groups.find((g) => g.id === s.group_id)?.name || "Unassigned",
       parents.find((p) => p.id === s.parent_id)?.email || "N/A",
-      s.is_approved ? t.yes : t.no,
+      s.is_approved ? "Yes" : "No",
       s.date_of_birth,
       s.national_id,
-      s.gender === "M" ? t.male : t.female,
+      s.gender === "M" ? "Male" : "Female",
       s.enrollment_date,
     ]);
     const csv = [headers, ...rows].map((row) => row.join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
+    a: href = url;
     a.download = "students_groups.csv";
     a.click();
     window.URL.revokeObjectURL(url);
-    message.success(t.success.exportCSV);
-  }, [filteredStudents, levels, groups, parents, t]);
+    message.success("CSV exported successfully");
+  }, [filteredStudents, levels, groups, parents]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -1095,61 +943,33 @@ export default function StudentsGroups() {
   );
 
   if (isLoading) {
-    return <div className="p-6 text-center text-text">{t.loading}</div>;
+    return <div className="p-6 text-center text-text">Loading...</div>;
   }
 
   return (
-    <div
-      className="p-4 sm:p-6 min-h-screen bg-background font-inter"
-      dir={language === "ar" ? "rtl" : "ltr"}
-    >
+    <div className="p-4 sm:p-6 min-h-screen bg-background font-inter">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-text flex items-center gap-2 animate-fade-in">
-            <Users className="w-8 h-8 text-primary" /> {t.title}
+            <Users className="w-8 h-8 text-primary" /> Student Groups
           </h1>
-          <div className="flex gap-2">
-            <Button
-              onClick={() => setLanguage("ar")}
-              variant={language === "ar" ? "default" : "outline"}
-              className={
-                language === "ar"
-                  ? "bg-primary text-text-inverted"
-                  : "border-border text-text"
-              }
-            >
-              العربية
-            </Button>
-            <Button
-              onClick={() => setLanguage("fr")}
-              variant={language === "fr" ? "default" : "outline"}
-              className={
-                language === "fr"
-                  ? "bg-primary text-text-inverted"
-                  : "border-border text-text"
-              }
-            >
-              Français
-            </Button>
-          </div>
         </div>
-        {/* Filters */}
         <Card className="mb-6 bg-background-light shadow-card">
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="level" className="font-semibold text-text">
-                  {t.level}
+                  Level
                 </Label>
                 <Select value={levelFilter} onValueChange={setLevelFilter}>
                   <SelectTrigger
                     id="level"
                     className="mt-1 border-border bg-background-light"
                   >
-                    <SelectValue placeholder={t.level} />
+                    <SelectValue placeholder="Level" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border-border">
-                    <SelectItem value="All">{t.allLevels}</SelectItem>
+                    <SelectItem value="All">All Levels</SelectItem>
                     {levels.map((l) => (
                       <SelectItem key={l.id} value={String(l.id)}>
                         {l.name}
@@ -1160,28 +980,35 @@ export default function StudentsGroups() {
               </div>
               <div>
                 <Label htmlFor="group" className="font-semibold text-text">
-                  {t.group}
+                  Group
                 </Label>
                 <Select value={groupFilter} onValueChange={setGroupFilter}>
                   <SelectTrigger
                     id="group"
                     className="mt-1 border-border bg-background-light"
                   >
-                    <SelectValue placeholder={t.group} />
+                    <SelectValue placeholder="Group" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border-border">
-                    <SelectItem value="All">{t.allGroups}</SelectItem>
-                    {groups.map((g) => (
-                      <SelectItem key={g.id} value={String(g.id)}>
-                        {g.name}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="All">All Groups</SelectItem>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                    {groups
+                      .filter(
+                        (g) =>
+                          levelFilter === "All" ||
+                          g.level_id === Number(levelFilter)
+                      )
+                      .map((g) => (
+                        <SelectItem key={g.id} value={String(g.id)}>
+                          {g.name}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label htmlFor="search" className="font-semibold text-text">
-                  {t.search}
+                  Search
                 </Label>
                 <div className="relative mt-1">
                   <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-text-muted" />
@@ -1189,7 +1016,7 @@ export default function StudentsGroups() {
                     id="search"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={t.searchPlaceholder}
+                    placeholder="Search by name, email, or national ID..."
                     className="pr-10 border-border bg-background-light text-text"
                   />
                 </div>
@@ -1197,7 +1024,6 @@ export default function StudentsGroups() {
             </div>
           </CardContent>
         </Card>
-        {/* Actions */}
         <Card className="mb-6 bg-background-light shadow-card">
           <CardContent className="pt-6">
             <div className="flex flex-col sm:flex-row gap-4 items-center">
@@ -1207,7 +1033,7 @@ export default function StudentsGroups() {
                 disabled={isSubmitting}
                 style={{ backgroundColor: "#0771CB" }}
               >
-                <Plus className="w-4 h-4 mr-2" /> {t.addStudent}
+                <Plus className="w-4 h-4 mr-2" /> Add Student
               </Button>
               <Button
                 onClick={() => {
@@ -1219,7 +1045,7 @@ export default function StudentsGroups() {
                 disabled={isSubmitting}
                 style={{ backgroundColor: "#0771CB" }}
               >
-                <Plus className="w-4 h-4 mr-2" /> {t.createGroup}
+                <Plus className="w-4 h-4 mr-2" /> Create Group
               </Button>
               <Select
                 onValueChange={bulkAssignGroup}
@@ -1232,16 +1058,23 @@ export default function StudentsGroups() {
                       : "hover:bg-background-dark cursor-pointer"
                   }`}
                 >
-                  <SelectValue placeholder={t.bulkAssign} />
+                  <SelectValue placeholder="Bulk Assign to Group" />
                 </SelectTrigger>
                 <SelectContent className="bg-background border-border">
-                  <SelectItem value="unassigned">{t.unassigned}</SelectItem>
-                  {groups.map((g) => (
-                    <SelectItem key={g.id} value={String(g.id)}>
-                      {g.name} (
-                      {levels.find((l) => l.id === g.level_id)?.name || "N/A"})
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  {groups
+                    .filter(
+                      (g) =>
+                        levelFilter === "All" ||
+                        g.level_id === Number(levelFilter)
+                    )
+                    .map((g) => (
+                      <SelectItem key={g.id} value={String(g.id)}>
+                        {g.name} (
+                        {levels.find((l) => l.id === g.level_id)?.name || "N/A"}
+                        )
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
               <Button
@@ -1249,17 +1082,17 @@ export default function StudentsGroups() {
                 className="bg-accent text-text-inverted hover:bg-accent-light w-full sm:w-auto"
                 disabled={isSubmitting}
               >
-                <Download className="w-4 h-4 mr-2" /> {t.exportCSV}
+                <Download className="w-4 h-4 mr-2" /> Export CSV
               </Button>
             </div>
             {bulkSelected.length > 0 && (
               <p className="mt-4 text-sm text-text-muted">
-                {t.selectedStudents(bulkSelected.length)}
+                {bulkSelected.length} student
+                {bulkSelected.length > 1 ? "s" : ""} selected
               </p>
             )}
           </CardContent>
         </Card>
-        {/* Stats */}
         <Card
           className="mb-6 bg-background-light shadow-card"
           style={{ backgroundColor: "#F5F5F5" }}
@@ -1268,24 +1101,23 @@ export default function StudentsGroups() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="text-center p-4 bg-card rounded-lg shadow-card animate-slide-up">
                 <p className="text-2xl font-bold text-primary">{stats.total}</p>
-                <p className="text-text-muted">{t.totalStudents}</p>
+                <p className="text-text-muted">Total Students</p>
               </div>
               <div className="text-center p-4 bg-card rounded-lg shadow-card animate-slide-up delay-100">
                 <p className="text-2xl font-bold text-primary">
                   {stats.assigned}
                 </p>
-                <p className="text-text-muted">{t.assignedStudents}</p>
+                <p className="text-text-muted">Assigned to Groups</p>
               </div>
               <div className="text-center p-4 bg-card rounded-lg shadow-card animate-slide-up delay-200">
                 <p className="text-2xl font-bold text-primary">
                   {stats.unassigned}
                 </p>
-                <p className="text-text-muted">{t.unassignedStudents}</p>
+                <p className="text-text-muted">Unassigned Students</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        {/* Columns */}
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -1293,18 +1125,23 @@ export default function StudentsGroups() {
           onDragEnd={handleDragEnd}
         >
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Selected Group */}
             <div>
               <StudentList
                 title={
                   groupFilter === "All"
-                    ? t.allAssignedStudents
+                    ? "All Assigned Students"
+                    : groupFilter === "unassigned"
+                    ? "Unassigned Students"
                     : `${
                         groups.find((g) => g.id === Number(groupFilter))
-                          ?.name || t.group
-                      } ${t.groupStudents}`
+                          ?.name || "Group"
+                      } Students`
                 }
-                students={groupStudents}
+                students={
+                  groupFilter === "unassigned"
+                    ? unassignedStudents
+                    : groupStudents
+                }
                 onEdit={(student) => {
                   setEditStudent(student);
                   setIsEditStudentOpen(true);
@@ -1313,13 +1150,11 @@ export default function StudentsGroups() {
                 onSelect={toggleSelectStudent}
                 bulkSelected={bulkSelected}
                 activeStudent={activeStudent}
-                t={t}
               />
             </div>
-            {/* Unassigned */}
             <div>
               <StudentList
-                title={t.unassignedStudentsTitle}
+                title="Unassigned Students"
                 students={unassignedStudents}
                 onEdit={(student) => {
                   setEditStudent(student);
@@ -1329,10 +1164,8 @@ export default function StudentsGroups() {
                 onSelect={toggleSelectStudent}
                 bulkSelected={bulkSelected}
                 activeStudent={activeStudent}
-                t={t}
               />
             </div>
-            {/* Drag Overlay */}
             <DragOverlay>
               {activeStudent && (
                 <div className="p-4 bg-card rounded-lg shadow-card opacity-80">
@@ -1349,7 +1182,7 @@ export default function StudentsGroups() {
                         {activeStudent.first_name} {activeStudent.last_name}
                       </p>
                       <p className="text-sm text-text-muted">
-                        {t.level}:{" "}
+                        Level:{" "}
                         {levels.find((l) => l.id === activeStudent.level_id)
                           ?.name || "N/A"}
                       </p>
@@ -1362,7 +1195,7 @@ export default function StudentsGroups() {
                       }
                     >
                       {groups.find((g) => g.id === activeStudent.group_id)
-                        ?.name || t.unassigned}
+                        ?.name || "Unassigned"}
                     </Badge>
                   </div>
                 </div>
@@ -1370,18 +1203,17 @@ export default function StudentsGroups() {
             </DragOverlay>
           </div>
         </DndContext>
-        {/* Add Student Dialog */}
         <Dialog open={isAddStudentOpen} onOpenChange={setIsAddStudentOpen}>
           <DialogContent className="bg-background-light max-w-md animate-zoom-in">
             <DialogHeader>
               <DialogTitle className="text-lg text-text">
-                {t.addStudentTitle}
+                Add New Student
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
                 <Label htmlFor="first_name" className="text-text">
-                  {t.firstName}
+                  First Name
                 </Label>
                 <Input
                   id="first_name"
@@ -1389,13 +1221,13 @@ export default function StudentsGroups() {
                   onChange={(e) =>
                     setNewStudent({ ...newStudent, first_name: e.target.value })
                   }
-                  placeholder={t.namePlaceholder}
+                  placeholder="e.g., Amina"
                   className="border-border bg-background-light text-text"
                 />
               </div>
               <div>
                 <Label htmlFor="last_name" className="text-text">
-                  {t.lastName}
+                  Last Name
                 </Label>
                 <Input
                   id="last_name"
@@ -1403,13 +1235,13 @@ export default function StudentsGroups() {
                   onChange={(e) =>
                     setNewStudent({ ...newStudent, last_name: e.target.value })
                   }
-                  placeholder={t.lastNamePlaceholder}
+                  placeholder="e.g., Bouchama"
                   className="border-border bg-background-light text-text"
                 />
               </div>
               <div>
                 <Label htmlFor="email" className="text-text">
-                  {t.email}
+                  Email
                 </Label>
                 <Input
                   id="email"
@@ -1418,13 +1250,13 @@ export default function StudentsGroups() {
                   onChange={(e) =>
                     setNewStudent({ ...newStudent, email: e.target.value })
                   }
-                  placeholder={t.emailPlaceholder}
+                  placeholder="e.g., amina@example.com"
                   className="border-border bg-background-light text-text"
                 />
               </div>
               <div>
                 <Label htmlFor="date_of_birth" className="text-text">
-                  {t.dob}
+                  Date of Birth
                 </Label>
                 <Input
                   id="date_of_birth"
@@ -1441,7 +1273,7 @@ export default function StudentsGroups() {
               </div>
               <div>
                 <Label htmlFor="national_id" className="text-text">
-                  {t.nationalId}
+                  National ID
                 </Label>
                 <Input
                   id="national_id"
@@ -1452,13 +1284,13 @@ export default function StudentsGroups() {
                       national_id: e.target.value,
                     })
                   }
-                  placeholder={t.nationalIdPlaceholder}
+                  placeholder="e.g., 1234567890"
                   className="border-border bg-background-light text-text"
                 />
               </div>
               <div>
                 <Label htmlFor="gender" className="text-text">
-                  {t.gender}
+                  Gender
                 </Label>
                 <Select
                   value={newStudent.gender}
@@ -1470,29 +1302,33 @@ export default function StudentsGroups() {
                     id="gender"
                     className="border-border bg-background-light text-text"
                   >
-                    <SelectValue placeholder={t.gender} />
+                    <SelectValue placeholder="Gender" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border-border">
-                    <SelectItem value="M">{t.male}</SelectItem>
-                    <SelectItem value="F">{t.female}</SelectItem>
+                    <SelectItem value="M">Male</SelectItem>
+                    <SelectItem value="F">Female</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label htmlFor="level_id" className="text-text">
-                  {t.levelSelect}
+                  Level
                 </Label>
                 <Select
                   value={newStudent.level_id}
                   onValueChange={(value) =>
-                    setNewStudent({ ...newStudent, level_id: value })
+                    setNewStudent({
+                      ...newStudent,
+                      level_id: value,
+                      group_id: "",
+                    })
                   }
                 >
                   <SelectTrigger
                     id="level_id"
                     className="border-border bg-background-light text-text"
                   >
-                    <SelectValue placeholder={t.levelSelect} />
+                    <SelectValue placeholder="Select Level" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border-border">
                     {levels.map((l) => (
@@ -1505,23 +1341,24 @@ export default function StudentsGroups() {
               </div>
               <div>
                 <Label htmlFor="group_id" className="text-text">
-                  {t.groupSelect}
+                  Group (Optional)
                 </Label>
                 <Select
                   value={newStudent.group_id || "none"}
                   onValueChange={(value) =>
                     setNewStudent({ ...newStudent, group_id: value })
                   }
+                  disabled={!newStudent.level_id}
                 >
                   <SelectTrigger
                     id="group_id"
                     className="border-border bg-background-light text-text"
                   >
-                    <SelectValue placeholder={t.groupSelect} />
+                    <SelectValue placeholder="Select Group" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border-border">
-                    <SelectItem value="none">{t.unassigned}</SelectItem>
-                    {groups.map((g) => (
+                    <SelectItem value="none">Unassigned</SelectItem>
+                    {availableGroups.map((g) => (
                       <SelectItem key={g.id} value={String(g.id)}>
                         {g.name}
                       </SelectItem>
@@ -1531,7 +1368,7 @@ export default function StudentsGroups() {
               </div>
               <div>
                 <Label htmlFor="parent_id" className="text-text">
-                  {t.parent}
+                  Parent
                 </Label>
                 <Select
                   value={newStudent.parent_id}
@@ -1543,7 +1380,7 @@ export default function StudentsGroups() {
                     id="parent_id"
                     className="border-border bg-background-light text-text"
                   >
-                    <SelectValue placeholder={t.parent} />
+                    <SelectValue placeholder="Select Parent" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border-border">
                     {parents.map((p) => (
@@ -1575,7 +1412,7 @@ export default function StudentsGroups() {
                 className="border-border text-text hover:bg-background-dark"
                 disabled={isSubmitting}
               >
-                {t.cancel}
+                Cancel
               </Button>
               <Button
                 onClick={addStudentHandler}
@@ -1583,66 +1420,69 @@ export default function StudentsGroups() {
                 disabled={isSubmitting}
                 style={{ backgroundColor: "#0771CB" }}
               >
-                {t.addStudentBtn}
+                Add Student
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        {/* Edit Student Dialog */}
         <Dialog open={isEditStudentOpen} onOpenChange={setIsEditStudentOpen}>
           <DialogContent className="bg-background-light max-w-md animate-zoom-in">
             <DialogHeader>
               <DialogTitle className="text-lg text-text">
-                {t.editStudentTitle}
+                Edit Student
               </DialogTitle>
             </DialogHeader>
             {editStudent ? (
               <div className="space-y-4">
                 <div>
-                  <Label className="text-text">{t.firstName}</Label>
+                  <Label className="text-text">First Name</Label>
                   <p className="p-2 bg-background-dark rounded-md text-text">
                     {editStudent.first_name} {editStudent.last_name}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-text">{t.email}</Label>
+                  <Label className="text-text">Email</Label>
                   <p className="p-2 bg-background-dark rounded-md text-text">
                     {editStudent.email}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-text">{t.dob}</Label>
+                  <Label className="text-text">Date of Birth</Label>
                   <p className="p-2 bg-background-dark rounded-md text-text">
                     {editStudent.date_of_birth}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-text">{t.nationalId}</Label>
+                  <Label className="text-text">National ID</Label>
                   <p className="p-2 bg-background-dark rounded-md text-text">
                     {editStudent.national_id}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-text">{t.gender}</Label>
+                  <Label className="text-text">Gender</Label>
                   <p className="p-2 bg-background-dark rounded-md text-text">
-                    {editStudent.gender === "M" ? t.male : t.female}
+                    {editStudent.gender === "M" ? "Male" : "Female"}
                   </p>
                 </div>
                 <div>
                   <Label htmlFor="edit-level_id" className="text-text">
-                    {t.levelSelect}
+                    Level
                   </Label>
                   <Select
                     value={String(editStudent.level_id || "")}
                     onValueChange={(value) =>
-                      setEditStudent({ ...editStudent, level_id: value })
+                      setEditStudent({
+                        ...editStudent,
+                        level_id: value,
+                        group_id: "none",
+                      })
                     }
                   >
                     <SelectTrigger
                       id="edit-level_id"
                       className="border-border bg-background-light text-text"
                     >
-                      <SelectValue placeholder={t.levelSelect} />
+                      <SelectValue placeholder="Select Level" />
                     </SelectTrigger>
                     <SelectContent className="bg-background border-border">
                       {levels.map((l) => (
@@ -1655,7 +1495,7 @@ export default function StudentsGroups() {
                 </div>
                 <div>
                   <Label htmlFor="edit-group_id" className="text-text">
-                    {t.groupSelect}
+                    Group (Optional)
                   </Label>
                   <Select
                     value={
@@ -1666,16 +1506,17 @@ export default function StudentsGroups() {
                     onValueChange={(value) =>
                       setEditStudent({ ...editStudent, group_id: value })
                     }
+                    disabled={!editStudent.level_id}
                   >
                     <SelectTrigger
                       id="edit-group_id"
                       className="border-border bg-background-light text-text"
                     >
-                      <SelectValue placeholder={t.groupSelect} />
+                      <SelectValue placeholder="Select Group" />
                     </SelectTrigger>
                     <SelectContent className="bg-background border-border">
-                      <SelectItem value="none">{t.unassigned}</SelectItem>
-                      {groups.map((g) => (
+                      <SelectItem value="none">Unassigned</SelectItem>
+                      {availableGroups.map((g) => (
                         <SelectItem key={g.id} value={String(g.id)}>
                           {g.name}
                         </SelectItem>
@@ -1685,7 +1526,7 @@ export default function StudentsGroups() {
                 </div>
               </div>
             ) : (
-              <p className="text-text-muted">{t.noStudents}</p>
+              <p className="text-text-muted">No students</p>
             )}
             <DialogFooter>
               <Button
@@ -1694,7 +1535,7 @@ export default function StudentsGroups() {
                 className="border-border text-text hover:bg-background-dark"
                 disabled={isSubmitting}
               >
-                {t.cancel}
+                Cancel
               </Button>
               <Button
                 onClick={editStudentGroup}
@@ -1702,23 +1543,22 @@ export default function StudentsGroups() {
                 disabled={isSubmitting || !editStudent}
                 style={{ backgroundColor: "#0771CB" }}
               >
-                {t.saveChanges}
+                Save Changes
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        {/* Add Group Dialog */}
         <Dialog open={isAddGroupOpen} onOpenChange={setIsAddGroupOpen}>
           <DialogContent className="bg-background-light max-w-md animate-zoom-in">
             <DialogHeader>
               <DialogTitle className="text-lg text-text">
-                {t.createGroupTitle}
+                Create New Group
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
                 <Label htmlFor="group_name" className="text-text">
-                  {t.groupName}
+                  Group Name
                 </Label>
                 <Input
                   id="group_name"
@@ -1726,13 +1566,13 @@ export default function StudentsGroups() {
                   onChange={(e) =>
                     setNewGroup({ ...newGroup, name: e.target.value })
                   }
-                  placeholder={t.groupNamePlaceholder}
+                  placeholder="e.g., Math Group A"
                   className="border-border bg-background-light text-text"
                 />
               </div>
               <div>
                 <Label htmlFor="group_level_id" className="text-text">
-                  {t.levelSelect}
+                  Level
                 </Label>
                 <Select
                   value={newGroup.level_id}
@@ -1744,7 +1584,7 @@ export default function StudentsGroups() {
                     id="group_level_id"
                     className="border-border bg-background-light text-text"
                   >
-                    <SelectValue placeholder={t.levelSelect} />
+                    <SelectValue placeholder="Select Level" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border-border">
                     {levels.map((l) => (
@@ -1757,7 +1597,7 @@ export default function StudentsGroups() {
               </div>
               <div>
                 <Label htmlFor="teacher_id" className="text-text">
-                  {t.teacher}
+                  Teacher (Optional)
                 </Label>
                 <Select
                   value={newGroup.teacher_id || "none"}
@@ -1769,10 +1609,10 @@ export default function StudentsGroups() {
                     id="teacher_id"
                     className="border-border bg-background-light text-text"
                   >
-                    <SelectValue placeholder={t.teacher} />
+                    <SelectValue placeholder="Select Teacher" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border-border">
-                    <SelectItem value="none">{t.none}</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {teachers.map((t) => (
                       <SelectItem key={t.id} value={String(t.id)}>
                         {t.first_name} {t.last_name}
@@ -1792,7 +1632,7 @@ export default function StudentsGroups() {
                 className="border-border text-text hover:bg-background-dark"
                 disabled={isSubmitting}
               >
-                {t.cancel}
+                Cancel
               </Button>
               <Button
                 onClick={addGroupHandler}
@@ -1800,12 +1640,11 @@ export default function StudentsGroups() {
                 disabled={isSubmitting}
                 style={{ backgroundColor: "#0771CB" }}
               >
-                {t.createGroupBtn}
+                Create Group
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        {/* New Group Prompt (Drag) */}
         <Dialog
           open={isNewGroupPromptOpen}
           onOpenChange={setIsNewGroupPromptOpen}
@@ -1813,13 +1652,13 @@ export default function StudentsGroups() {
           <DialogContent className="bg-background-light max-w-md animate-zoom-in">
             <DialogHeader>
               <DialogTitle className="text-lg text-text">
-                {t.createGroupTitle}
+                Create New Group
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
                 <Label htmlFor="drag_group_name" className="text-text">
-                  {t.groupName}
+                  Group Name
                 </Label>
                 <Input
                   id="drag_group_name"
@@ -1827,13 +1666,13 @@ export default function StudentsGroups() {
                   onChange={(e) =>
                     setNewGroup({ ...newGroup, name: e.target.value })
                   }
-                  placeholder={t.dragGroupNamePlaceholder}
+                  placeholder="e.g., Science Group B"
                   className="border-border bg-background-light text-text"
                 />
               </div>
               <div>
                 <Label htmlFor="drag_group_level_id" className="text-text">
-                  {t.levelSelect}
+                  Level
                 </Label>
                 <Select
                   value={newGroup.level_id}
@@ -1845,7 +1684,7 @@ export default function StudentsGroups() {
                     id="drag_group_level_id"
                     className="border-border bg-background-light text-text"
                   >
-                    <SelectValue placeholder={t.levelSelect} />
+                    <SelectValue placeholder="Select Level" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border-border">
                     {levels.map((l) => (
@@ -1858,7 +1697,7 @@ export default function StudentsGroups() {
               </div>
               <div>
                 <Label htmlFor="drag_teacher_id" className="text-text">
-                  {t.teacher}
+                  Teacher (Optional)
                 </Label>
                 <Select
                   value={newGroup.teacher_id || "none"}
@@ -1870,10 +1709,10 @@ export default function StudentsGroups() {
                     id="drag_teacher_id"
                     className="border-border bg-background-light text-text"
                   >
-                    <SelectValue placeholder={t.teacher} />
+                    <SelectValue placeholder="Select Teacher" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border-border">
-                    <SelectItem value="none">{t.none}</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {teachers.map((t) => (
                       <SelectItem key={t.id} value={String(t.id)}>
                         {t.first_name} {t.last_name}
@@ -1894,7 +1733,7 @@ export default function StudentsGroups() {
                 className="border-border text-text hover:bg-background-dark"
                 disabled={isSubmitting}
               >
-                {t.cancel}
+                Cancel
               </Button>
               <Button
                 onClick={addGroupFromDrag}
@@ -1902,20 +1741,22 @@ export default function StudentsGroups() {
                 disabled={isSubmitting}
                 style={{ backgroundColor: "#0771CB" }}
               >
-                {t.createAndAssign}
+                Create and Assign
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        {/* Delete Confirmation Dialog */}
         <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
           <DialogContent className="bg-background-light max-w-md animate-zoom-in">
             <DialogHeader>
               <DialogTitle className="text-lg text-text">
-                {t.deleteConfirmTitle}
+                Confirm Deletion
               </DialogTitle>
             </DialogHeader>
-            <p className="text-text-muted">{t.deleteConfirmText}</p>
+            <p className="text-text-muted">
+              Are you sure you want to delete this student? This action is
+              irreversible.
+            </p>
             <DialogFooter>
               <Button
                 variant="outline"
@@ -1923,7 +1764,7 @@ export default function StudentsGroups() {
                 className="border-border text-text hover:bg-background-dark"
                 disabled={isSubmitting}
               >
-                {t.cancel}
+                Cancel
               </Button>
               <Button
                 onClick={confirmDelete}
@@ -1931,7 +1772,7 @@ export default function StudentsGroups() {
                 disabled={isSubmitting}
                 style={{ backgroundColor: "#EA5455" }}
               >
-                {t.delete}
+                Delete
               </Button>
             </DialogFooter>
           </DialogContent>

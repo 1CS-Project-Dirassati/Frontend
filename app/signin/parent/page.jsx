@@ -57,7 +57,7 @@ export default function SignInPage() {
       <div className={style.Form}>
         <h1 className={style.custom_text}>Sign In</h1>
         <p className={style.custom_subText}>
-          Don’t have an account?  <span className="text-red-500 cursor-pointer underline" onClick={()=>router.push("/signup")} >Create now</span>
+          Don&apos;t have an account?  <span className="text-red-500 cursor-pointer underline" onClick={()=>router.push("/signup")} >Create now</span>
         </p>
         <div className={style.InputContainer}>
           <p className={style.text}>E-mail</p>
@@ -73,7 +73,7 @@ export default function SignInPage() {
           Forgot Password?
         </span>
       </p>
-      <AntButton_primary text={"Sign Up"} onClick={signupClickHandler}></AntButton_primary>
+      <AntButton_primary text={"Sign In"} onClick={signupClickHandler}></AntButton_primary>
 
     </div>
     </div>

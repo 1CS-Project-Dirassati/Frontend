@@ -20,7 +20,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
-import { translations } from "../utils/translations";
+//import { translations } from "../utils/translations";
 import { message } from "antd";
 import apiCall from "@/components/utils/apiCall";
 import { useSelector } from "react-redux";
@@ -178,7 +178,7 @@ export default function GroupSelector({ selectedLevel, onGroupSelect, onNext }) 
         <CardTitle>Select or Create Group</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex items-baseline space-x-2 w-full gap-4">
           <div className="space-y-2">
             <Label>Select Group</Label>
             <Select
@@ -188,14 +188,17 @@ export default function GroupSelector({ selectedLevel, onGroupSelect, onNext }) 
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select a group">
-                  {selectedGroup ? `${selectedGroup.name} (${selectedGroup.capacity} students)` : "Select a group"}
+                  {selectedGroup
+                    ? `${selectedGroup.name} (${selectedGroup.capacity} students)`
+                    : "Select a group"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {(groups || []).map(group => (
-                  <SelectItem 
-                    key={group.id} 
+                {(groups || []).map((group) => (
+                  <SelectItem
+                    key={group.id}
                     value={group.id.toString()}
+                    className="bg-white"
                   >
                     {group.name} ({group.capacity} students)
                   </SelectItem>
@@ -210,7 +213,7 @@ export default function GroupSelector({ selectedLevel, onGroupSelect, onNext }) 
               onOpenChange={setIsGroupModalVisible}
             >
               <DialogTrigger asChild>
-                <Button type="default" className="w-full">
+                <Button type="default" className="w-full bg-primary-light">
                   <Plus className="mr-2 h-4 w-4" />
                   Create New Group
                 </Button>
@@ -244,7 +247,11 @@ export default function GroupSelector({ selectedLevel, onGroupSelect, onNext }) 
             </Dialog>
           </div>
         </div>
-        <Button type="primary" onClick={handleNext} className="mt-4 w-full">
+        <Button
+          type="primary"
+          onClick={handleNext}
+          className="mt-4 w-full bg-primary-light"
+        >
           Next
         </Button>
       </CardContent>
