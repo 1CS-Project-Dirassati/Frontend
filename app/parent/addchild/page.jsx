@@ -18,8 +18,8 @@ export default function AddChild() {
     last_name: "",
     email: "",
     docs_url: "",
-    level: "",
-    date_of_birth: "",
+    level_id: null,
+  
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -30,7 +30,7 @@ export default function AddChild() {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: name === "level_id" ? parseInt(value, 10) || null : value,
       ...(name === "date_of_birth" && { age: calculateAge(value) }),
     }));
   };
@@ -101,7 +101,7 @@ export default function AddChild() {
         token: accesstoken,
       });
       setMessage({ type: "success", text: "Child added successfully!" });
-      setFormData({ first_name: "", last_name: "", email: "", docs_url: "", level: "", date_of_birth: "" });
+      setFormData({ first_name: "", last_name: "", email: "", docs_url: "", level_id: "" });
       setUploadUrls([]);
     } catch (error) {
       setMessage({ type: "error", text: "Failed to add child. Please try again." });
@@ -162,10 +162,10 @@ export default function AddChild() {
           <label className="block text-sm font-medium mb-1">Level</label>
           <AntInput
             type="text"
-            name="level"
+            name="level_id"
             placeHolder="Enter level"
-            inputValue={formData.level}
-            onInputChange={(value) => handleChange({ target: { name: "level", value } })}
+            inputValue={formData.level_id}
+            onInputChange={(value) => handleChange({ target: { name: "level_id", value } })}
             required
           />
         </div>

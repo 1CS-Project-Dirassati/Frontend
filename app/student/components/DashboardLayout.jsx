@@ -101,12 +101,7 @@ const DashboardLayout = ({ children }) => {
       icon: <User className="w-4 h-4" />,
       action: () => router.push("/student/studentProfile"),
     },
-    {
-      key: "settings",
-      label: "Settings",
-      icon: <Settings className="w-4 h-4" />,
-      action: () => console.log("Settings clicked"),
-    },
+  
     {
       key: "logout",
       label: "Logout",

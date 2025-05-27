@@ -168,25 +168,8 @@ export default function Home() {
     }
   }, [userId]);
 
-  if (loading) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <Spin size="large" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return <Alert message="Error" description={error} type="error" showIcon />;
-  }
-
+  
+ 
   const statsData = [
     {
       name: "Attendance Rate",

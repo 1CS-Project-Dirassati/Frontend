@@ -102,6 +102,7 @@ const DashboardLayout = ({ children }) => {
     },
  
     {
+
       key: "profile",
       icon: <User />,
       label: "Profile",
@@ -120,13 +121,13 @@ const DashboardLayout = ({ children }) => {
       key: "profile",
       label: "Profile",
       icon: <User className="w-4 h-4" />,
-      action: () => router.push("/parent/parentProfile/1"),
+      action: () => console.log("Profile clicked"),
     },
     {
       key: "settings",
       label: "Settings",
       icon: <Settings className="w-4 h-4" />,
-      action: () => console.log("Settings clicked"),
+      action: () => router.push("/parent/parentProfile/1"),
     },
     {
       key: "logout",
