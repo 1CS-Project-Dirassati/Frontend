@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "antd";
 import {
   HomeOutlined,
@@ -9,6 +9,9 @@ import {
   CalendarOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  BookOutlined,
+  CreditCardOutlined,
+  ExclamationCircleOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -19,34 +22,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useSelector } from "react-redux";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import {
-  Bell,
-  Search,
-  User,
-  LogOut,
-  Settings,
-  Group,
-  Notebook,
-} from "lucide-react";
-import { debounce } from "lodash";
-import { useSelector } from "react-redux";
+import { Bell, User, LogOut, Settings, Group, Notebook } from "lucide-react";
+
 const { Content, Footer } = Layout;
 
 const DashboardLayout = ({ children }) => {
-    const parent = useSelector((state)=>state.userinfo.userProfile) 
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-
+ const user = useSelector((state)=>state.userinfo.userProfile) 
   useEffect(() => {
     const handleResize = () => {
       setCollapsed(window.innerWidth < 768);
-      setIsSearchOpen(window.innerWidth >= 768);
     };
     window.addEventListener("resize", handleResize);
     handleResize();
@@ -57,19 +47,8 @@ const DashboardLayout = ({ children }) => {
     document.body.style.background = "#E1E1E1";
   }, []);
 
-  const handleSearch = useCallback(
-    debounce((value) => {
-      console.log("Searching:", value);
-    }, 500),
-    []
-  );
-
-  const toggleSearch = () => {
-    setIsSearchOpen((prev) => !prev);
-    if (!isSearchOpen) setSearchQuery("");
-  };
-
   const handleNotificationClick = () => {
+    // Placeholder
     console.log("Notifications clicked");
   };
 
@@ -96,7 +75,7 @@ const DashboardLayout = ({ children }) => {
  ,
     {
       key: "attendance",
-      icon: <Notebook />,
+      icon: <CreditCardOutlined />,
       label: "payments",
       href: "/parent/payments",
     },
@@ -108,6 +87,13 @@ const DashboardLayout = ({ children }) => {
       label: "Profile",
       href: "/parent/parentProfile/1",
     },
+     {
+
+      key: "SeeNotes",
+      icon: <BookOutlined />,
+      label: "See Notes",
+      href: "/parent/see-note",
+    },
     {
       key: "addchild",
       icon: <UserOutlined />, // You can replace this with a more appropriate icon
@@ -115,8 +101,9 @@ const DashboardLayout = ({ children }) => {
       href: "/parent/addchild",
     },
   ];
+  
 
-  const userMenuItems = [
+   const userMenuItems = [
     {
       key: "profile",
       label: "Profile",
@@ -137,48 +124,54 @@ const DashboardLayout = ({ children }) => {
     },
   ];
 
+  const staticNotifications = [
+    { id: 1, text: "3 new students pending approval" },
+    { id: 2, text: "Payment failed for Parent13" },
+    { id: 3, text: "Term 3 schedule is not finalized" },
+  ];
+
   const getSelectedKey = () => {
     if (pathname === "/parent") return "home";
     return pathname.split("/").pop() || "home";
   };
 
   return (
-    <Layout className="min-h-screen font-inter">
+    <Layout className="min-h-screen font-serif">
+      {/* Sidebar */}
       <aside
-        className={`bg-sidebar-bg text-text-inverted transition-all duration-300 ${
+        className={`bg-primary text-text-inverted transition-all duration-300 ${
           collapsed ? "w-16" : "w-64"
-        } fixed h-full z-10 shadow-md`}
+        } fixed h-full z-10 shadow-xl flex flex-col`}
       >
-        <div className="p-4 flex items-center justify-between">
-          {!collapsed && (
-            <div className="text-xl font-bold font-serif text-text-inverted">
-              Dirassati
-            </div>
-          )}
-          {collapsed && (
-            <div className="text-xl font-bold font-serif text-text-inverted">
-              D
-            </div>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
+        {/* Header / Branding */}
+        <div className="relative flex items-center justify-between p-6   text-white backdrop-blur-md">
+          <a
+            href="/parent"
+            className="text-2xl cursor-pointer font-bold font-baskerville italic text-center text-white border-b-4 border-accent inline-block"
+          >
+            <p className="text-white ">{collapsed ? "D" : "Dirassati"}</p>
+          </a>
+
+          {/* Sidebar Toggle Button - Better Placement */}
+          <button
             onClick={() => setCollapsed(!collapsed)}
-            className="text-text-inverted hover:bg-primary hover:text-text-inverted"
+            className="absolute -right-3 top-4 bg-accent text-white rounded-full p-2 shadow-lg hover:bg-accent-light transition z-30"
           >
             {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-          </Button>
+          </button>
         </div>
-        <nav className="flex flex-col gap-2 p-2">
+
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-2  ">
           {menuItems.map((item) => (
             <Link key={item.key} href={item.href}>
               <Button
                 variant={getSelectedKey() === item.key ? "default" : "ghost"}
-                className={`w-full justify-start gap-2 text-left text-text-inverted ${
+                className={`w-full justify-start text-white gap-3 text-left rounded-xl font-medium ${
                   getSelectedKey() === item.key
-                    ? "bg-primary-light hover:bg-primary-light"
-                    : "hover:bg-primary hover:text-text-inverted"
-                } ${collapsed ? "px-2" : "px-4"}`}
+                    ? "bg-primary-light text-white shadow hover:bg-primary-light/80"
+                    : "hover:bg-primary-light hover:text-white"
+                } ${collapsed ? "px-3 py-2" : "px-4 py-3"}`}
               >
                 {item.icon}
                 {!collapsed && <span>{item.label}</span>}
@@ -186,67 +179,76 @@ const DashboardLayout = ({ children }) => {
             </Link>
           ))}
         </nav>
+
+        {/* Footer/Optional Section */}
+        {!collapsed && (
+          <div className="p-4 text-xs text-text-muted  bg-primary-dark/70">
+            &copy; {new Date().getFullYear()} Dirassati
+          </div>
+        )}
       </aside>
 
+      {/* Main layout */}
       <Layout
         className={`${
           collapsed ? "ml-16" : "ml-64"
         } transition-all duration-300 bg-background`}
       >
-        <header className="sticky top-0 z-20 bg-header-bg shadow-card animate-fade-in">
+        {/* Header */}
+        <header className="sticky top-0 z-20 bg-primary shadow-card animate-fade-in">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {isSearchOpen ? (
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-muted" />
-                  <Input
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      handleSearch(e.target.value);
-                    }}
-                    placeholder="Search students, groups..."
-                    className="pl-10 w-48 sm:w-64 border-border bg-background-light text-text focus:ring-primary focus:border-primary transition-all duration-300 rounded-md"
-                  />
-                </div>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleSearch}
-                  className="text-text hover:bg-accent hover:text-text-inverted transition-transform duration-300 hover:scale-105"
-                >
-                  <Search className="w-5 h-5" />
-                </Button>
-              )}
+            <div className="text-lg font-semibold italic text-white">
+              Parent Dashboard
             </div>
             <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleNotificationClick}
-                className="relative text-text-inverted hover:bg-accent hover:text-text-inverted transition-transform duration-300 hover:scale-105"
-              >
-                <Bell className="w-5 h-5" />
-                <Badge
-                  content="5"
-                  className="absolute -top-2 -right-2 bg-accent text-text-inverted text-xs font-semibold px-2 py-0.5 rounded-full animate-pulse"
-                />
-              </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="flex items-center gap-2 text-text-inverted hover:bg-secondary hover:text-text-inverted transition-transform duration-300 hover:scale-105"
+                    size="icon"
+                    className="relative text-text-inverted hover:bg-accent hover:text-text-inverted transition-transform duration-300 hover:scale-105"
+                    onClick={handleNotificationClick}
                   >
-                    <Avatar className="h-8 w-8 bg-secondary text-text-inverted">
+                    <Bell className="w-5 h-5" />
+                    <Badge
+                      content={staticNotifications.length}
+                      className="absolute -top-2 -right-2 bg-accent text-white text-xs font-semibold px-2 py-0.5 rounded-full animate-pulse"
+                    />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="w-72 bg-background border border-border text-text animate-slide-down"
+                  align="end"
+                >
+                  <div className="px-3 py-2 text-sm font-semibold border-b border-border">
+                    Notifications
+                  </div>
+                  {staticNotifications.map((notif) => (
+                    <DropdownMenuItem
+                      key={notif.id}
+                      className="text-sm hover:bg-accent hover:text-text-inverted cursor-pointer"
+                    >
+                      {notif.text}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* User avatar */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="flex items-center gap-2 text-text-inverted hover:bg-accent hover:text-text-inverted transition-transform duration-300 hover:scale-105"
+                  >
+                    <Avatar className="h-8 w-8 bg-accent text-text-inverted">
                       <AvatarImage src="/avatar.png" alt="User" />
                       <AvatarFallback>
                         <User className="w-5 h-5" />
                       </AvatarFallback>
                     </Avatar>
                     <span className="hidden sm:inline text-sm font-medium">
-                      {parent.first_name}
+                      {user.last_name}
                     </span>
                   </Button>
                 </DropdownMenuTrigger>
@@ -269,9 +271,13 @@ const DashboardLayout = ({ children }) => {
             </div>
           </div>
         </header>
+
+        {/* Content */}
         <Content className="m-6 p-6 bg-background-light min-h-[280px] rounded-lg text-text shadow-card">
           {children}
         </Content>
+
+        {/* Footer */}
         <Footer className="text-center bg-background border-t border-border text-text-muted">
           School Dashboard © {new Date().getFullYear()} Created by Your Team
         </Footer>
@@ -281,3 +287,4 @@ const DashboardLayout = ({ children }) => {
 };
 
 export default DashboardLayout;
+  
